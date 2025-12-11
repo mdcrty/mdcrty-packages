@@ -1,10 +1,15 @@
 {
   "name": "@mdcrty/digital-rain",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "React digital rain (Matrix-style) canvas component with command console and source-code toggle.",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
     "README.md",
@@ -17,5 +22,24 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
-  "license": "MIT"
+  "keywords": [
+    "react",
+    "canvas",
+    "matrix",
+    "digital-rain",
+    "animation",
+    "effects"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdcrty/mdcrty-packages.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mdcrty/mdcrty-packages/issues"
+  },
+  "homepage": "https://github.com/mdcrty/mdcrty-packages/tree/main/packages/digital-rain#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -336,27 +336,32 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
 
     // Function to handle window resize
     const handleResize = () => {
-      // Validate the canvas ref and the effect ref
       if (canvasRef.current === null || effectRef.current === null) return;
 
-      // Set the canvas to fit the entire window
+      // 1. Resize canvas (this resets context state)
       setSize();
 
       const canvas = canvasRef.current;
-
-      // Set HiDPI on resize
       const ctx = canvas.getContext("2d");
-      if (ctx) {
-        // Set font size again so characters don't shrink to half size
-        ctx.font = effectRef.current.fontSize + "px monospace";
+      if (!ctx) return;
 
-        // Transform the context to match DPR scale
-        const dpr = Math.max(1, window.devicePixelRatio || 1);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      }
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
 
-      // Call resize with logical CSS pixel dimensions
-      effectRef.current.resize(window.innerWidth, window.innerHeight);
+      // 2. Restore stable text settings
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = effectRef.current.fontSize + "px monospace";
+
+      // 3. Restore transform & crispness
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      CRISP_TEXT = dpr === 1;
+
+      // 4. Recompute logical size like in startAnimation
+      const logicalWidth = Math.floor(canvas.width / dpr);
+      const logicalHeight = Math.floor(canvas.height / dpr);
+
+      // 5. Resize effect with logical dimensions
+      effectRef.current.resize(logicalWidth, logicalHeight);
     };
 
     // Add the handler to the resize event

@@ -1,7 +1,8 @@
 {
   "name": "mdcrty-packages",
-  "version": "1.0.0",
-  "description": "mono repo of packages for npm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo of mdcrty npm packages",
   "workspaces": [
     "packages/*"
   ],
@@ -16,9 +17,9 @@
     "url": "git+https://github.com/mdcrty/mdcrty-packages.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "author": "leonanderson88",
+  "license": "MIT",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/mdcrty/mdcrty-packages/issues"
   },
