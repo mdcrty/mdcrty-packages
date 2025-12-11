@@ -1,0 +1,31 @@
+{
+  "name": "mdcrty-packages",
+  "version": "1.0.0",
+  "description": "mono repo of packages for npm",
+  "workspaces": [
+    "packages/*"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "lint": "echo \"add lint per package later\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdcrty/mdcrty-packages.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mdcrty/mdcrty-packages/issues"
+  },
+  "homepage": "https://github.com/mdcrty/mdcrty-packages#readme",
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

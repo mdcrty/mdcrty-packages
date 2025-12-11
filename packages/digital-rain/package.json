@@ -1,0 +1,17 @@
+{
+  "name": "@mdcrty/digital-rain",
+  "version": "0.1.0",
+  "description": "React digital rain (Matrix-style) canvas component with command console and source-code toggle.",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "license": "MIT"
+}
