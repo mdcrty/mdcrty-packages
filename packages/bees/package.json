@@ -1,0 +1,56 @@
+{
+  "name": "@mdcrty/bees",
+  "version": "0.1.0",
+  "description": "A performant, canvas-based animated bee swarm for React. Designed as a decorative background effect with full-page support, cross-browser fixes, and configurable layering.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "simplex-noise": "^4.0.1"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0 <20.0.0",
+    "react-dom": ">=18.0.0 <20.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.0"
+  },
+  "keywords": [
+    "react",
+    "canvas",
+    "bees",
+    "animation",
+    "effects"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdcrty/mdcrty-packages.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mdcrty/mdcrty-packages/issues"
+  },
+  "homepage": "https://github.com/mdcrty/mdcrty-packages/tree/main/packages/bees#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

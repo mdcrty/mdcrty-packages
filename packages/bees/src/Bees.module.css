@@ -1,0 +1,39 @@
+.beeCanvasContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fadeWrapper {
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+
+.opacity0 {
+  opacity: 0;
+}
+
+.opacity1 {
+  opacity: 1;
+}
+
+.beeCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.closeButton {
+  position: fixed;
+  top: 68px;
+  right: 8px;
+
+  /* Ensure the close button is always clickable */
+  pointer-events: auto;
+  cursor: pointer;
+}
