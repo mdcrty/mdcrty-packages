@@ -1,6 +1,6 @@
 {
   "name": "@mdcrty/digital-rain",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React digital rain (Matrix-style) canvas component with command console and source-code toggle.",
   "keywords": [
     "react",
