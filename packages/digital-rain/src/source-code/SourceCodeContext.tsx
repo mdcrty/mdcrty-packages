@@ -1,4 +1,4 @@
-"use client";
+"use client"; // Must be client, extensive use of client only functions in react
 
 import {
   createContext,

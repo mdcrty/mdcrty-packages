@@ -1,3 +1,5 @@
+"use client"; // Must be client, extensive use of client only functions in react
+
 export { default as DigitalRain } from "./DigitalRain";
 export {
   SourceCodeProvider,

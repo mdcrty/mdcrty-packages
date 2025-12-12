@@ -1,14 +1,11 @@
 {
-  "name": "@mdcrty/digital-rain",
-  "version": "0.1.1",
-  "description": "React digital rain (Matrix-style) canvas component with command console and source-code toggle.",
+  "name": "@mdcrty/your-package",
+  "version": "0.1.0",
+  "description": "…",
   "keywords": [
     "react",
     "canvas",
-    "matrix",
-    "digital-rain",
-    "animation",
-    "effects"
+    "animation"
   ],
   "license": "MIT",
   "type": "module",
