@@ -1,6 +1,6 @@
 {
   "name": "@mdcrty/bees",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A performant, canvas-based animated bee swarm for React. Designed as a decorative background effect with full-page support, cross-browser fixes, and configurable layering.",
   "type": "module",
   "exports": {
