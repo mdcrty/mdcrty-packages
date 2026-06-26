@@ -125,7 +125,7 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
   const [inputValue, setInputValue] = useState<string>("~ % ");
   const [displayItems, setDisplayItems] = useState(defaultDisplayItems);
   const [animationOptions, setAnimationOptions] = useState<AnimationOptions>(
-    defaultAnimationOptions
+    defaultAnimationOptions,
   );
 
   // Set default CSS Properties for display items
@@ -146,7 +146,7 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
   const setThemeColorToBlack = () => {
     if (typeof document === "undefined") return;
     let meta = document.querySelector<HTMLMetaElement>(
-      'meta[name="theme-color"]'
+      'meta[name="theme-color"]',
     );
     if (!meta) {
       meta = document.createElement("meta");
@@ -169,7 +169,7 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
   const restoreThemeColor = () => {
     if (typeof document === "undefined") return;
     const meta = document.querySelector<HTMLMetaElement>(
-      'meta[name="theme-color"]'
+      'meta[name="theme-color"]',
     );
     const prev = themeColorRef.current;
     if (prev === null) return; // nothing to restore or we weren't the ones to change it
@@ -613,6 +613,8 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
     const measureSpan = document.createElement("span");
     measureSpan.style.visibility = "hidden";
     measureSpan.style.position = "absolute";
+    measureSpan.style.top = "0px";
+    measureSpan.style.left = "-9999px"; 
     measureSpan.style.whiteSpace = "pre";
     measureSpan.style.fontFamily = "monospace";
     measureSpan.style.fontSize = `${animationOptions.fontSize}px`;
@@ -868,6 +870,7 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
       {/* The code input element, outside the div and 
       can be displayed even when the animation isn't visible */}
       <input
+        name="mdcrtyDrTerminal"
         ref={inputRef}
         onBlur={() => setInputOpen(false)}
         value={inputValue}
@@ -914,7 +917,7 @@ class Symbol {
     alpha: number,
     changeCharacterFrequency: number,
     changeCharacterDuration: number,
-    fixedChar?: string
+    fixedChar?: string,
   ) {
     // Set all inputs to the local properties
     this.x = x;
@@ -937,7 +940,7 @@ class Symbol {
   draw(
     ctx: CanvasRenderingContext2D,
     currentCell: number = 0,
-    changeCharacter: boolean = false
+    changeCharacter: boolean = false,
   ) {
     // Ensure fixed characters are always set and never randomised
     if (this.fixedChar !== undefined && this.text !== this.fixedChar) {
@@ -964,7 +967,7 @@ class Symbol {
         -(this.x + 0.5) * this.fontSize, // Negative as canvas is flipped horrizontally each frame
         (this.y - 0.5) * this.fontSize,
         this.fontSize,
-        this.fontSize
+        this.fontSize,
       );
 
       // Set first character to white
@@ -975,14 +978,14 @@ class Symbol {
           ctx,
           this.text,
           this.x * this.fontSize,
-          this.y * this.fontSize
+          this.y * this.fontSize,
         );
       } else {
         drawCharacter(
           ctx,
           this.text,
           this.x * this.fontSize,
-          this.y * this.fontSize
+          this.y * this.fontSize,
         );
       }
     } else if (currentCell === this.y + 1) {
@@ -993,7 +996,7 @@ class Symbol {
           ctx,
           this.text,
           this.x * this.fontSize,
-          this.y * this.fontSize
+          this.y * this.fontSize,
         );
       } else {
         // If cell is 1 after the current cell draw green
@@ -1004,7 +1007,7 @@ class Symbol {
           ctx,
           this.text,
           this.x * this.fontSize,
-          this.y * this.fontSize
+          this.y * this.fontSize,
         );
       }
     } else if (
@@ -1022,7 +1025,7 @@ class Symbol {
         -(this.x + 0.5) * this.fontSize, // Negative as canvas is flipped horrizontally each frame
         (this.y - 0.5) * this.fontSize,
         this.fontSize,
-        this.fontSize
+        this.fontSize,
       );
 
       // Set the character to green
@@ -1032,7 +1035,7 @@ class Symbol {
         ctx,
         this.text,
         this.x * this.fontSize,
-        this.y * this.fontSize
+        this.y * this.fontSize,
       );
     } else {
       // All remaining cells behind and infront of current
@@ -1042,7 +1045,7 @@ class Symbol {
         -(this.x + 0.5) * this.fontSize, // Negative as canvas is flipped horrizontally each frame
         (this.y - 0.5) * this.fontSize,
         this.fontSize,
-        this.fontSize
+        this.fontSize,
       );
     }
   }
@@ -1076,7 +1079,7 @@ class Column {
     changeCharacterDuration: number,
     frequencyOfRandomCellsInColumns: number,
     numberOfRandomCellsInColumns: number,
-    fixedCharacterMap?: Map<string, string>
+    fixedCharacterMap?: Map<string, string>,
   ) {
     // Set all inputs to local properties
     this.x = x;
@@ -1118,7 +1121,7 @@ class Column {
         this.alpha,
         this.changeCharacterFrequency,
         this.changeCharacterDuration,
-        fixedChar
+        fixedChar,
       );
     }
   }
@@ -1157,8 +1160,8 @@ class Column {
         getRandomNumbersOrNull(
           this.frequencyOfRandomCellsInColumns,
           this.symbols.length,
-          this.numberOfRandomCellsInColumns
-        )
+          this.numberOfRandomCellsInColumns,
+        ),
       );
     } else {
       // Otherwise progress the current cell by 1
@@ -1256,8 +1259,8 @@ class Effect {
             this.changeCharacterDuration,
             this.frequencyOfRandomCellsInColumns,
             this.numberOfRandomCellsInColumns,
-            this.fixedCharacterMap
-          )
+            this.fixedCharacterMap,
+          ),
         );
       }
     }
@@ -1341,7 +1344,7 @@ class Effect {
 function getRandomNumbersOrNull(
   probabilityOfNumber: number = 1,
   multiplier: number = 1,
-  maxLength: number = 1
+  maxLength: number = 1,
 ): Array<number> {
   if (Math.random() > probabilityOfNumber) {
     return [];
@@ -1367,7 +1370,7 @@ function drawCharacter(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
-  y: number
+  y: number,
 ) {
   const px = CRISP_TEXT ? Math.round(x) + 0.5 : x; //Crispness tweak
   const py = CRISP_TEXT ? Math.round(y) + 0.5 : y; //Crispness tweak
@@ -1383,7 +1386,7 @@ function drawCharacterUnflipped(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
-  y: number
+  y: number,
 ) {
   const px = CRISP_TEXT ? Math.round(x) + 0.5 : x;
   const py = CRISP_TEXT ? Math.round(y) + 0.5 : y;
