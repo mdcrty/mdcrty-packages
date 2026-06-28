@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSourceCode } from "./source-code/SourceCodeContext";
+import QRCode from "qrcode";
 
 // Outside classes (module-level)
 const KANJI = "日";
@@ -33,6 +34,17 @@ let CRISP_TEXT = false;
  * @property {number} changeCharacterDuration How many characters after start should continue changing
  * @property {number} frequencyOfRandomCellsInColumns 0->1 Frequency of random cell columns
  * @property {number} numberOfRandomCellsInColumns Number of random cells that change per column
+ * @property {Array<string>} [staticMessages] Words/lines rendered as fixed unmirrored text, centred per row
+ * @property {number} [staticMessagesDelaySec] Seconds before staticMessages start revealing as the rain head passes (default 0)
+ * @property {string} [qrValue] Content to encode as a QR overlay; omit to disable the QR mask
+ * @property {number} [qrDelaySec] Seconds before qrValue starts revealing as the rain head passes (default 0)
+ * @property {number} [qrScale] Characters per QR module; <= 0 auto-fits to the shorter canvas axis (default 1)
+ * @property {number} [qrOffAlpha] Per-frame black overlay alpha on QR off-modules; 1 = solid black, 0.1 = chars visible but dimmed (default 0.95)
+ * @property {number} [qrQuietZone] QR quiet-zone width in modules, applied before scale (default 1)
+ * @property {string} [qrColor] Colour used for on-module characters (default "#0aff0a")
+ * @property {boolean} [qrStaticChar] When true, on-module cells render "■" instead of random rain characters (default false)
+ * @property {() => void} [onShowSourceCode] Override for the "show source" command; defaults to the SourceCode context
+ * @property {() => void} [onHideSourceCode] Override for the "hide source" command; defaults to the SourceCode context
  */
 export type DigitalRainOptions = {
   autoRun?: boolean;
@@ -46,6 +58,14 @@ export type DigitalRainOptions = {
   frequencyOfRandomCellsInColumns?: number;
   numberOfRandomCellsInColumns?: number;
   staticMessages?: Array<string>;
+  staticMessagesDelaySec?: number; // Seconds before staticMessages start rendering (default 0)
+  qrValue?: string;    // Content to encode as a QR code overlay
+  qrDelaySec?: number; // Seconds before qrValue starts rendering (default 0)
+  qrScale?: number;    // Characters per QR module — omit to auto-fit
+  qrOffAlpha?: number; // Per-frame black overlay alpha on off-modules (0–1, default 0.95)
+  qrQuietZone?: number; // Quiet-zone width in QR modules (default 1)
+  qrColor?: string;    // Colour for on-module characters (default "#0aff0a")
+  qrStaticChar?: boolean; // When true, on-module cells render "■" instead of random chars
   onShowSourceCode?: () => void;
   onHideSourceCode?: () => void;
 };
@@ -53,13 +73,42 @@ export type DigitalRainOptions = {
 type ResolvedDigitalRainOptions = Required<
   Omit<
     DigitalRainOptions,
-    "staticMessages" | "onShowSourceCode" | "onHideSourceCode"
+    | "qrValue"
+    | "qrColor"
+    | "staticMessages"
+    | "onShowSourceCode"
+    | "onHideSourceCode"
   >
 > & {
   staticMessages?: Array<string>;
+  qrValue?: string;
+  qrColor?: string;
 };
 
 type AnimationOptions = Omit<ResolvedDigitalRainOptions, "autoRun">;
+
+// Keys settable via `~ % set <key> <value>`. Decoupled from current state so
+// that options without defaults (qrValue, qrColor) are still settable at runtime.
+const SETTABLE_OPTION_KEYS: ReadonlyArray<keyof AnimationOptions> = [
+  "fontSize",
+  "fps",
+  "alpha",
+  "variabilityOfStart",
+  "numberOfColumnOverlaps",
+  "changeCharacterFrequency",
+  "changeCharacterDuration",
+  "frequencyOfRandomCellsInColumns",
+  "numberOfRandomCellsInColumns",
+  "staticMessages",
+  "staticMessagesDelaySec",
+  "qrValue",
+  "qrDelaySec",
+  "qrScale",
+  "qrOffAlpha",
+  "qrQuietZone",
+  "qrColor",
+  "qrStaticChar",
+];
 
 /**
  * Default Component properties incase they are not supplied
@@ -75,6 +124,12 @@ const staticDefaultComponentProps: ResolvedDigitalRainOptions = {
   changeCharacterDuration: 15,
   frequencyOfRandomCellsInColumns: 1,
   numberOfRandomCellsInColumns: 6,
+  qrScale: 1,
+  qrOffAlpha: 0.95,
+  qrQuietZone: 1,
+  qrStaticChar: false,
+  qrDelaySec: 0,
+  staticMessagesDelaySec: 0,
 };
 
 /**
@@ -189,12 +244,6 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
     themeColorRef.current = null;
   };
 
-  // Update one field in the state
-  const optionChange = (field: string, value: number) => {
-    setAnimationOptions((prevState) => {
-      return { ...prevState, [field]: value };
-    });
-  };
 
   // Update display items, set all others to false by default
   const displayItemChange = (item: string, show: boolean) => {
@@ -562,26 +611,57 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
 
   // Function sets the animation option if valid
   const setOptionCommand = (option: string) => {
-    // Split out all input commands
-    const [command, key, value, ...other] = option.split(" ");
+    const parts = option.split(" ");
+    const command = parts[0];
+    const key = parts[1];
+    const rawValue = parts.slice(2).join(" ").trim();
 
-    // if there are too many inputs, no command, no key, no value end here
-    if (other.length > 0 || !command || !key || !value) return;
-
-    // Check if command is `set`
+    if (!command || !key) return;
     if (/^set$/.test(command) === false) return;
+    if (!SETTABLE_OPTION_KEYS.includes(key as keyof AnimationOptions)) return;
 
-    // Check if key existis on animationOptions object and
-    // returns if it doesn't
-    if (!Object.keys(animationOptions).includes(key)) return;
+    const currentValue = animationOptions[key as keyof typeof animationOptions];
 
-    // Parse the input to a number
-    const parsedValue = parseInt(value, 10);
-    // If not a number end here
-    if (isNaN(parsedValue)) return;
+    // Array values (e.g. staticMessages)
+    // Supports: set staticMessages word1 word2 word3
+    //       or: set staticMessages "message one" "message two"
+    // No value clears the array.
+    if (Array.isArray(currentValue) || key === "staticMessages") {
+      if (!rawValue) {
+        setAnimationOptions((prev) => ({ ...prev, [key]: undefined }));
+        return;
+      }
+      const quoted = rawValue.match(/"([^"]*)"/g);
+      const messages = quoted
+        ? quoted.map((q) => q.slice(1, -1)).filter(Boolean)
+        : rawValue.split(/\s+/).filter(Boolean);
+      setAnimationOptions((prev) => ({ ...prev, [key]: messages }));
+      return;
+    }
 
-    // All checked, now you can change the value
-    optionChange(key, parsedValue);
+    if (!rawValue) return;
+
+    // Boolean (covers qrStaticChar, etc.) — check before numeric since "1"/"0" are common booleans
+    if (typeof currentValue === "boolean" && /^(true|false)$/i.test(rawValue)) {
+      setAnimationOptions((prev) => ({
+        ...prev,
+        [key]: rawValue.toLowerCase() === "true",
+      }));
+      return;
+    }
+
+    // Numeric (covers fontSize, alpha, fps, qrScale, qrOffAlpha, etc.)
+    const numValue = parseFloat(rawValue);
+    if (!isNaN(numValue)) {
+      setAnimationOptions((prev) => ({ ...prev, [key]: numValue }));
+      return;
+    }
+
+    // String (covers qrValue, qrColor, etc.)
+    if (typeof currentValue === "string" || currentValue === undefined) {
+      setAnimationOptions((prev) => ({ ...prev, [key]: rawValue }));
+      return;
+    }
   };
 
   // Function sets which item to display if valid
@@ -614,7 +694,7 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
     measureSpan.style.visibility = "hidden";
     measureSpan.style.position = "absolute";
     measureSpan.style.top = "0px";
-    measureSpan.style.left = "-9999px"; 
+    measureSpan.style.left = "-9999px";
     measureSpan.style.whiteSpace = "pre";
     measureSpan.style.fontFamily = "monospace";
     measureSpan.style.fontSize = `${animationOptions.fontSize}px`;
@@ -813,7 +893,19 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
                 <tr>
                   <td>~ % set &lt;option&gt; &lt;value&gt;</td>
                   <td style={{ paddingLeft: "1em" }}>
-                    Set specific animation &lt;option&gt;
+                    Set numeric or string animation option
+                  </td>
+                </tr>
+                <tr>
+                  <td>~ % set qrValue https://website.com/</td>
+                  <td style={{ paddingLeft: "1em" }}>
+                    Set qr code (set blank to remove)
+                  </td>
+                </tr>
+                <tr>
+                  <td>~ % set staticMessages w1 w2 w3</td>
+                  <td style={{ paddingLeft: "1em" }}>
+                    Set messages (space-separated words, or &quot;quoted strings&quot;)
                   </td>
                 </tr>
                 <tr>
@@ -909,6 +1001,10 @@ class Symbol {
   changeCharacterFrequency: number;
   changeCharacterDuration: number;
   fixedChar?: string;
+  qrAlpha?: number;  // undefined = normal cell | 0 = on-module (no fade) | >0 = off-module (suppressed)
+  qrColor?: string;  // on-module character colour override
+  qrStaticChar: boolean;  // when true and on-module, render a fixed "■" instead of random chars
+  qrRevealed: boolean;  // latched true once the rain head sweeps past this cell post qrActive — gates QR behaviour to avoid the all-cell flash at delay elapse
 
   constructor(
     x: number,
@@ -918,6 +1014,9 @@ class Symbol {
     changeCharacterFrequency: number,
     changeCharacterDuration: number,
     fixedChar?: string,
+    qrAlpha?: number,
+    qrColor?: string,
+    qrStaticChar: boolean = false,
   ) {
     // Set all inputs to the local properties
     this.x = x;
@@ -928,6 +1027,12 @@ class Symbol {
     this.changeCharacterFrequency = changeCharacterFrequency;
     this.changeCharacterDuration = changeCharacterDuration;
     this.fixedChar = fixedChar;
+    this.qrAlpha = qrAlpha;
+    this.qrColor = qrColor;
+    this.qrStaticChar = qrStaticChar;
+    this.qrRevealed = false;
+    // No static-char seeding here — the reveal happens in draw() once the
+    // head reaches the cell post-activation. That gives the bit-by-bit effect.
   }
 
   /**
@@ -936,28 +1041,66 @@ class Symbol {
    * @param {CanvasRenderingContext2D} ctx The canvas context used to draw the symbol
    * @param {number} currentCell The current active cell in the column for the purpose of the rain drop
    * @param {boolean} changeCharacter Whether the character should change at the input change rate or remain static
+   * @param {boolean} qrActive When false, the cell ignores its QR metadata (on/off-module, qrColor, qrStaticChar) and renders as a normal rain cell. Flipped true by the Effect once qrDelaySec has elapsed.
+   * @param {boolean} staticActive When false, the cell ignores its fixedChar metadata and renders as a normal rain cell. Flipped true by the Effect once staticMessagesDelaySec has elapsed.
    */
   draw(
     ctx: CanvasRenderingContext2D,
     currentCell: number = 0,
     changeCharacter: boolean = false,
+    qrActive: boolean = true,
+    staticActive: boolean = true,
   ) {
-    // Ensure fixed characters are always set and never randomised
-    if (this.fixedChar !== undefined && this.text !== this.fixedChar) {
-      this.text = this.fixedChar;
+    // Delay-gated capabilities. A cell can act on its fixed/qr metadata only
+    // when its corresponding feature has been activated.
+    const canBeStatic = staticActive && this.fixedChar !== undefined;
+    const baseCanBeQrOn = qrActive && this.qrAlpha === 0;
+    const baseCanBeQrOff =
+      qrActive && this.qrAlpha !== undefined && this.qrAlpha > 0;
+
+    // Latch the per-cell reveal at the moment the rain head sweeps past
+    // post-activation. This prevents every QR cell from flipping behaviour at
+    // the same instant the delay elapses — instead the QR is drawn in
+    // top-to-bottom by the rain itself, one cell per head pass.
+    const headOnCell = currentCell === this.y;
+    if (headOnCell && (baseCanBeQrOn || baseCanBeQrOff)) {
+      this.qrRevealed = true;
     }
 
-    // If drawing the current cell in the column, or the symbol is a change character
-    // and we have reached the frequency of change number
-    // get a random character from the set dicitonary of characters
-    // Only randomise if this is NOT a fixed character
-    if (
-      (this.fixedChar === undefined && currentCell === this.y) ||
-      (changeCharacter && currentCell % this.changeCharacterFrequency === 0)
+    const canBeQrOnModule = baseCanBeQrOn && this.qrRevealed;
+    const canBeQrOffModule = baseCanBeQrOff && this.qrRevealed;
+    const isStaticQrSeed = canBeQrOnModule && this.qrStaticChar;
+
+    // Text update: the head pass is the moment a cell "reveals" — that's where
+    // we either lock in the fixed/static-qr character or randomise a rain glyph.
+    if (headOnCell) {
+      if (canBeStatic) {
+        this.text = this.fixedChar!;
+      } else if (isStaticQrSeed) {
+        this.text = "■";
+      } else {
+        this.text = CHAR_POOL.charAt(
+          Math.floor(Math.random() * CHAR_POOL_LEN),
+        );
+      }
+    } else if (
+      changeCharacter &&
+      currentCell % this.changeCharacterFrequency === 0
     ) {
-      // Random character selection
-      this.text = CHAR_POOL.charAt(Math.floor(Math.random() * CHAR_POOL_LEN));
+      // Change-character randomisation skips cells already locked to a glyph.
+      const lockedFixed = canBeStatic && this.text === this.fixedChar;
+      const lockedQr = isStaticQrSeed && this.text === "■";
+      if (!lockedFixed && !lockedQr) {
+        this.text = CHAR_POOL.charAt(
+          Math.floor(Math.random() * CHAR_POOL_LEN),
+        );
+      }
     }
+
+    // A cell renders in "static" style (white, unmirrored) only once it
+    // actually holds its fixed character. Until the head passes post-activation,
+    // it's still showing rain glyphs and renders mirrored like the rest.
+    const renderingAsStatic = canBeStatic && this.text === this.fixedChar;
 
     // Set color based on whether it's the first frame
     if (currentCell === this.y) {
@@ -972,8 +1115,8 @@ class Symbol {
 
       // Set first character to white
       ctx.fillStyle = "#FFF";
-      // Draw the character
-      if (this.fixedChar !== undefined) {
+      // Draw the character — unmirrored once the cell has revealed as static.
+      if (renderingAsStatic) {
         drawCharacterUnflipped(
           ctx,
           this.text,
@@ -989,8 +1132,8 @@ class Symbol {
         );
       }
     } else if (currentCell === this.y + 1) {
-      if (this.fixedChar !== undefined) {
-        // If cell is fixecd character then it stays white
+      if (renderingAsStatic) {
+        // Static-message cell keeps showing its character in white.
         ctx.fillStyle = "#FFF";
         drawCharacterUnflipped(
           ctx,
@@ -999,10 +1142,8 @@ class Symbol {
           this.y * this.fontSize,
         );
       } else {
-        // If cell is 1 after the current cell draw green
-        // Set the character to green
-        ctx.fillStyle = "#0aff0a";
-        // Draw the symbol
+        // QR on-module cells draw in qrColor when active; otherwise classic green.
+        ctx.fillStyle = canBeQrOnModule && this.qrColor ? this.qrColor : "#0aff0a";
         drawCharacter(
           ctx,
           this.text,
@@ -1011,7 +1152,7 @@ class Symbol {
         );
       }
     } else if (
-      this.fixedChar === undefined &&
+      !renderingAsStatic &&
       // CHANGE CHARACTER DRAW
       changeCharacter && // if the symbol is set to change character, and
       currentCell > this.y && // it's more than 2 after the current cell, and
@@ -1028,8 +1169,7 @@ class Symbol {
         this.fontSize,
       );
 
-      // Set the character to green
-      ctx.fillStyle = "#0aff0a";
+      ctx.fillStyle = canBeQrOnModule && this.qrColor ? this.qrColor : "#0aff0a";
       // Draw the symbol
       drawCharacter(
         ctx,
@@ -1037,12 +1177,24 @@ class Symbol {
         this.x * this.fontSize,
         this.y * this.fontSize,
       );
-    } else {
-      // All remaining cells behind and infront of current
-      // Draw over with a rectangle of black at set alpha amount
+    } else if (!canBeQrOnModule) {
+      // All remaining cells behind and in front of current.
+      // QR on-module cells skip the fade post-activation to stay bright.
       ctx.fillStyle = `rgba(0, 0, 0, ${this.alpha})`;
       ctx.fillRect(
         -(this.x + 0.5) * this.fontSize, // Negative as canvas is flipped horrizontally each frame
+        (this.y - 0.5) * this.fontSize,
+        this.fontSize,
+        this.fontSize,
+      );
+    }
+
+    // QR off-module overlay: dim the cell every frame with a black layer at qrAlpha.
+    // qrAlpha = 1 → fully black (no chars visible); qrAlpha = 0.1 → chars visible, ~10% dimmer per frame.
+    if (canBeQrOffModule) {
+      ctx.fillStyle = `rgba(0, 0, 0, ${this.qrAlpha})`;
+      ctx.fillRect(
+        -(this.x + 0.5) * this.fontSize,
         (this.y - 0.5) * this.fontSize,
         this.fontSize,
         this.fontSize,
@@ -1068,6 +1220,9 @@ class Column {
   symbols: Array<Symbol>;
   randomCells: Set<number>;
   fixedCharacterMap?: Map<string, string>;
+  qrMap?: Map<string, number>; // col,row → alpha override for QR cells
+  qrColor?: string;
+  qrStaticChar: boolean;
 
   constructor(
     x: number,
@@ -1080,6 +1235,9 @@ class Column {
     frequencyOfRandomCellsInColumns: number,
     numberOfRandomCellsInColumns: number,
     fixedCharacterMap?: Map<string, string>,
+    qrMap?: Map<string, number>,
+    qrColor?: string,
+    qrStaticChar: boolean = false,
   ) {
     // Set all inputs to local properties
     this.x = x;
@@ -1095,6 +1253,9 @@ class Column {
     this.symbols = [];
     this.randomCells = new Set<number>();
     this.fixedCharacterMap = fixedCharacterMap;
+    this.qrMap = qrMap;
+    this.qrColor = qrColor;
+    this.qrStaticChar = qrStaticChar;
 
     //Run private initialiser method
     this.#initialiser();
@@ -1112,6 +1273,8 @@ class Column {
       const key = `${this.x},${i}`;
       // Test it against the fixed character map
       const fixedChar = this.fixedCharacterMap?.get(key) ?? undefined;
+      // Test it against the QR map for an alpha override
+      const qrAlpha = this.qrMap?.get(key);
 
       // add the Symbol Object to the column
       this.symbols[i] = new Symbol(
@@ -1122,6 +1285,9 @@ class Column {
         this.changeCharacterFrequency,
         this.changeCharacterDuration,
         fixedChar,
+        qrAlpha,
+        qrAlpha !== undefined ? this.qrColor : undefined,
+        this.qrStaticChar,
       );
     }
   }
@@ -1130,18 +1296,24 @@ class Column {
    * Draws a frame for each column upon call based on the objects input parameters
    *
    * @param {CanvasRenderingContext2D} ctx The canvas context used to draw the symbol
+   * @param {boolean} qrActive Forwarded to each Symbol — true once the QR delay has elapsed
+   * @param {boolean} staticActive Forwarded to each Symbol — true once the static-messages delay has elapsed
    */
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(
+    ctx: CanvasRenderingContext2D,
+    qrActive: boolean = true,
+    staticActive: boolean = true,
+  ) {
     // Loop over all symbols in column
     for (let i = 0; i < this.symbols.length; i++) {
       const symbol = this.symbols[i];
       // If there are random cells in the column and the current cell is a random cell
       if (this.randomCells.has(i)) {
         // Trigger the Symbols draw method and mark it's character for randomisation
-        symbol.draw(ctx, this.currentCell, true);
+        symbol.draw(ctx, this.currentCell, true, qrActive, staticActive);
       } else {
         // Trigger the Symbols draw method
-        symbol.draw(ctx, this.currentCell, false);
+        symbol.draw(ctx, this.currentCell, false, qrActive, staticActive);
       }
     }
 
@@ -1188,6 +1360,17 @@ class Effect {
   columns: Array<Column>;
   staticMessages?: Array<string>;
   fixedCharacterMap?: Map<string, string>;
+  qrValue?: string;
+  qrScale: number;
+  qrOffAlpha: number;
+  qrQuietZone: number;
+  qrColor?: string;
+  qrStaticChar: boolean;
+  qrDelaySec: number;
+  staticMessagesDelaySec: number;
+  qrMap?: Map<string, number>;
+  // Wall-clock start time (ms). Used to compute delay-based activation each frame.
+  #startTime: number;
 
   constructor({
     canvasWidth,
@@ -1201,6 +1384,14 @@ class Effect {
     frequencyOfRandomCellsInColumns,
     numberOfRandomCellsInColumns,
     staticMessages,
+    qrValue,
+    qrScale,
+    qrOffAlpha,
+    qrQuietZone,
+    qrColor,
+    qrStaticChar,
+    qrDelaySec,
+    staticMessagesDelaySec,
   }: {
     canvasWidth: number;
     canvasHeight: number;
@@ -1213,6 +1404,14 @@ class Effect {
     frequencyOfRandomCellsInColumns: number;
     numberOfRandomCellsInColumns: number;
     staticMessages?: Array<string>;
+    qrValue?: string;
+    qrScale: number;
+    qrOffAlpha: number;
+    qrQuietZone: number;
+    qrColor?: string;
+    qrStaticChar: boolean;
+    qrDelaySec: number;
+    staticMessagesDelaySec: number;
   }) {
     // Set all inputs to local properties
     this.canvasWidth = canvasWidth;
@@ -1227,6 +1426,15 @@ class Effect {
     this.numberOfRandomCellsInColumns = numberOfRandomCellsInColumns;
     this.columns = [];
     this.staticMessages = staticMessages;
+    this.qrValue = qrValue;
+    this.qrScale = qrScale;
+    this.qrOffAlpha = qrOffAlpha;
+    this.qrQuietZone = qrQuietZone;
+    this.qrColor = qrColor;
+    this.qrStaticChar = qrStaticChar;
+    this.qrDelaySec = qrDelaySec;
+    this.staticMessagesDelaySec = staticMessagesDelaySec;
+    this.#startTime = performance.now();
 
     //Run private initialiser method
     this.#initialiser();
@@ -1236,8 +1444,9 @@ class Effect {
    * Private function to initialise the effect
    */
   #initialiser() {
-    // Rebuild the fixed-character map for the current canvas size
+    // Rebuild maps for the current canvas size
     this.#buildFixedCharMap();
+    this.#buildQrMap();
     // Loop over the number of overlaps of columns, how many drops per collumn
     for (let j = 0; j < this.numberOfColumnOverlaps; j++) {
       // Calculate the width of the window based on font size and create a column for each
@@ -1260,9 +1469,93 @@ class Effect {
             this.frequencyOfRandomCellsInColumns,
             this.numberOfRandomCellsInColumns,
             this.fixedCharacterMap,
+            this.qrMap,
+            this.qrColor,
+            this.qrStaticChar,
           ),
         );
       }
+    }
+  }
+
+  /**
+   * Builds a per-cell alpha-override map from a QR code, keyed by "col,row".
+   * Off-module cells (including the quiet zone) store `qrOffAlpha` as the
+   * per-frame black overlay strength. On-module cells store `0`, marking them
+   * as "render bright with qrColor and skip the rain fade".
+   *
+   * The map is consumed by Column.#initialiser which passes per-cell values
+   * into each Symbol. Honours `qrValue`, `qrScale` (≤ 0 = auto-fit),
+   * `qrQuietZone`, and `qrOffAlpha`. Silently disables the mask if QR
+   * generation fails (e.g. content too long for the chosen error level).
+   */
+  #buildQrMap() {
+    if (!this.qrValue) {
+      this.qrMap = undefined;
+      return;
+    }
+
+    try {
+      const qr = QRCode.create(this.qrValue, { errorCorrectionLevel: "M" });
+      const { data, size } = qr.modules;
+
+      const totalCols = Math.max(
+        1,
+        Math.ceil(this.canvasWidth / this.fontSize),
+      );
+      const totalRows = Math.max(
+        1,
+        Math.ceil(this.canvasHeight / this.fontSize),
+      );
+
+      // Quiet zone on each side, in QR modules (applied before scale)
+      const quietZone = Math.max(0, Math.floor(this.qrQuietZone));
+      const totalSize = size + quietZone * 2;
+
+      // Auto-fit: largest integer scale where the QR fits on the shorter canvas axis
+      const autoScale = Math.max(
+        1,
+        Math.floor(Math.min(totalCols, totalRows) / totalSize),
+      );
+      const scale = this.qrScale > 0 ? this.qrScale : autoScale;
+
+      const scaledSize = totalSize * scale;
+      const offsetCol = Math.floor((totalCols - scaledSize) / 2);
+      const offsetRow = Math.floor((totalRows - scaledSize) / 2);
+
+      const qrMap = new Map<string, number>();
+
+      for (let row = 0; row < totalSize; row++) {
+        for (let col = 0; col < totalSize; col++) {
+          const qrRow = row - quietZone;
+          const qrCol = col - quietZone;
+          const inData =
+            qrRow >= 0 && qrRow < size && qrCol >= 0 && qrCol < size;
+          const isOn = inData && data[qrRow * size + qrCol] === 1;
+
+          for (let dr = 0; dr < scale; dr++) {
+            for (let dc = 0; dc < scale; dc++) {
+              const charRow = offsetRow + row * scale + dr;
+              const charCol = offsetCol + col * scale + dc;
+              if (
+                charRow >= 0 &&
+                charRow < totalRows &&
+                charCol >= 0 &&
+                charCol < totalCols
+              ) {
+                // On-module (0): rain animates but never fades — stays bright
+                // Off-module + quiet zone (0.95): heavily suppressed
+                qrMap.set(`${charCol},${charRow}`, isOn ? 0 : this.qrOffAlpha);
+              }
+            }
+          }
+        }
+      }
+
+      this.qrMap = qrMap;
+    } catch {
+      // QR generation failed (e.g. content too long) — disable mask silently
+      this.qrMap = undefined;
     }
   }
 
@@ -1302,14 +1595,27 @@ class Effect {
   }
 
   /**
-   * Draws a frame for the effect based on the objects input parameters
+   * Draws a frame for the effect based on the objects input parameters.
+   * Computes wall-clock elapsed time against the configured `qrDelaySec` and
+   * `staticMessagesDelaySec` to derive per-frame activation flags, then forwards
+   * them to each Column so the QR / static-message reveal happens organically
+   * as the rain head sweeps over each cell post-activation.
    *
    * @param {CanvasRenderingContext2D} ctx The canvas ctx used to draw the symbol
    */
   draw(ctx: CanvasRenderingContext2D) {
+    // Delay-gated activation. Each feature becomes active once its configured
+    // delay has elapsed since this Effect was constructed. Cells consult these
+    // flags every frame, so the QR / static-message reveal happens organically
+    // — on-modules paint in as the rain head sweeps past, off-modules dim down
+    // over a few frames according to qrOffAlpha.
+    const elapsedSeconds = (performance.now() - this.#startTime) / 1000;
+    const qrActive = elapsedSeconds >= this.qrDelaySec;
+    const staticActive = elapsedSeconds >= this.staticMessagesDelaySec;
+
     // Trigger each columns draw method
     for (let i = 0; i < this.columns.length; i++) {
-      this.columns[i].draw(ctx);
+      this.columns[i].draw(ctx, qrActive, staticActive);
     }
   }
 
@@ -1381,6 +1687,11 @@ function drawCharacter(
  * Function draws characters without being mirrored, used for fixed message characters.
  * It cancels the global horizontal flip by applying another scale(-1, 1) and then
  * draws the text without negating the x-coordinate.
+ *
+ * @param {CanvasRenderingContext2D} ctx The canvas context used to draw the symbol
+ * @param {string} text The text to be drawn
+ * @param {number} x The x coordinate of the text
+ * @param {number} y The y coordinate of the text
  */
 function drawCharacterUnflipped(
   ctx: CanvasRenderingContext2D,
