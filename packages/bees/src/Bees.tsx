@@ -218,7 +218,7 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
     clusterRampStepSec = 30,
     zIndex = 1, // 👈 default “neutral”
   }: BeesProps,
-  ref
+  ref,
 ): JSX.Element {
   // Create all references
   const portalHostRef = useRef<HTMLDivElement | null>(null);
@@ -279,7 +279,7 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
         return isRunning;
       },
     }),
-    [idleDelaySec, isRunning]
+    [idleDelaySec, isRunning],
   );
 
   // Start the animation cycle
@@ -427,7 +427,7 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
       if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
       idleTimeoutRef.current = setTimeout(
         handleIdleTimeout,
-        idleDelaySec * 1000
+        idleDelaySec * 1000,
       );
     };
 
@@ -476,7 +476,7 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
         html.clientHeight,
         html.scrollHeight,
         html.offsetHeight,
-        window.innerHeight
+        window.innerHeight,
       );
       // NOTE:
       // Chrome (especially on Windows) can report a layout width that is
@@ -609,7 +609,7 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
 
           // Remove old entries
           history.current = history.current.filter(
-            (t) => now - t < SHAKE.MAX_SHAKE_INTERVAL
+            (t) => now - t < SHAKE.MAX_SHAKE_INTERVAL,
           );
 
           // If we meet the required shakes then fade out
@@ -668,7 +668,14 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
     }
 
     // No cleanup here; we do unmount cleanup below
-  }, [isCanvasActiveInDom, playFlag, pausedFlag, isRunning, firstRunComplete, startAnimation]);
+  }, [
+    isCanvasActiveInDom,
+    playFlag,
+    pausedFlag,
+    isRunning,
+    firstRunComplete,
+    startAnimation,
+  ]);
 
   // Unmount-only cleanup (prevents instant disappear on prop changes)
   useEffect(() => {
@@ -710,7 +717,7 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
       <div
         className={cx(
           classes.fadeWrapper,
-          isFadingOut ? classes.opacity0 : classes.opacity1
+          isFadingOut ? classes.opacity0 : classes.opacity1,
         )}
         onTransitionEnd={handleFadeOutEnd}
       >
@@ -983,7 +990,7 @@ class Hive {
     const canvasArea = this.canvasWidth * this.canvasHeight;
     const perBeeArea = Math.max(
       1,
-      this.beeDensityRatio * this.beeSize * this.beeSize
+      this.beeDensityRatio * this.beeSize * this.beeSize,
     );
     const estimated = Math.floor(canvasArea / perBeeArea);
     // Clamp to sensible bounds so tiny screens/huge bees don't hit 0 or explode
@@ -1127,7 +1134,7 @@ class Hive {
           ) {
             beeA.enterState(
               animationType.land,
-              Math.floor(25 + Math.random() * 35)
+              Math.floor(25 + Math.random() * 35),
             );
             beeA.proximityCooldown = Math.floor(this.fps * 0.5);
             beeA.minStateFrames = 10;
@@ -1218,14 +1225,14 @@ class Hive {
               ) {
                 beeA.enterState(
                   animationType.land,
-                  Math.floor(30 + Math.random() * 45)
+                  Math.floor(30 + Math.random() * 45),
                 );
                 beeA.proximityCooldown = Math.floor(this.fps * 0.5);
                 beeA.minStateFrames = 12;
               } else if (beeA.animation !== animationType.hover) {
                 beeA.enterState(
                   animationType.hover,
-                  Math.floor(20 + Math.random() * 25)
+                  Math.floor(20 + Math.random() * 25),
                 );
                 beeA.minStateFrames = 10;
               }
@@ -1233,7 +1240,7 @@ class Hive {
               if (beeA.animation !== animationType.blocked) {
                 beeA.enterState(
                   animationType.blocked,
-                  Math.floor(40 + Math.random() * 60)
+                  Math.floor(40 + Math.random() * 60),
                 );
               }
             }
@@ -1416,7 +1423,7 @@ class Hive {
    */
   #getNearestCellToPointFast(
     x: number,
-    y: number
+    y: number,
   ): { cell: Honeycomb | undefined; dist: number } {
     const { q: qf, r: rf } = this.#xyToAxial(x, y);
     const { q, r } = this.#axialRound(qf, rf);
@@ -1452,7 +1459,7 @@ class Hive {
    */
   #getNearestCellToPoint(
     x: number,
-    y: number
+    y: number,
   ): { cell: Honeycomb | undefined; dist: number } {
     //O(1) nearest‑cell lookup (ditch O(Ncells) scans)
     return this.#getNearestCellToPointFast(x, y);
@@ -1506,7 +1513,7 @@ class Hive {
    */
   #getAngleToTarget(
     from: { x: number; y: number },
-    to: { x: number; y: number }
+    to: { x: number; y: number },
   ): number {
     return Math.atan2(to.y - from.y, to.x - from.x);
   }
@@ -1523,7 +1530,7 @@ class Hive {
   #isFacingTarget(
     bee: Bee,
     target: Bee,
-    maxAngle: number = Math.PI / 4
+    maxAngle: number = Math.PI / 4,
   ): boolean {
     const angleToTarget = this.#getAngleToTarget(bee, target);
     const diff = Math.abs(this.normaliseAngle(angleToTarget - bee.theta));
@@ -1586,7 +1593,7 @@ class Hive {
    */
   #findNearestHoneycombCell(
     bee: Bee,
-    activeHoneyCells?: HoneycombMap
+    activeHoneyCells?: HoneycombMap,
   ): Honeycomb | undefined {
     const honey = activeHoneyCells ?? this.#getActiveHoneyCells();
     const it = honey.values();
@@ -1617,7 +1624,7 @@ class Hive {
    */
   #pickTargetForBee(
     bee: Bee,
-    activeHoney?: HoneycombMap
+    activeHoney?: HoneycombMap,
   ): Honeycomb | undefined {
     const activeCells = activeHoney ?? this.#getActiveHoneyCells();
     if (activeCells.size === 0) return undefined;
@@ -1630,7 +1637,7 @@ class Hive {
     if (Math.random() < 0.15) {
       const nearEntries = Array.from(activeCells.entries()).filter(
         ([, c]) =>
-          Math.hypot(c.x - nearest.x, c.y - nearest.y) < this.honeyCombSize * 6
+          Math.hypot(c.x - nearest.x, c.y - nearest.y) < this.honeyCombSize * 6,
       );
       if (nearEntries.length > 0) {
         const [, picked] =
@@ -1655,7 +1662,7 @@ class Hive {
     // 1) Scare nearby bees: turn away and take off
     const scareRadius = Math.max(
       CLICK.SCARE_RADIUS_MIN,
-      this.beeSize * CLICK.SCARE_RADIUS_BEE_MULT
+      this.beeSize * CLICK.SCARE_RADIUS_BEE_MULT,
     );
     for (const bee of this.bees) {
       const d = Math.hypot(bee.x - x, bee.y - y);
@@ -1678,8 +1685,8 @@ class Hive {
             animationType.takeoff,
             Math.floor(
               CLICK.TAKEOFF_MIN_FRAMES +
-                Math.random() * CLICK.TAKEOFF_VAR_FRAMES
-            ) //Super fast take off
+                Math.random() * CLICK.TAKEOFF_VAR_FRAMES,
+            ), //Super fast take off
           );
         }
       }
@@ -1689,7 +1696,7 @@ class Hive {
     {
       const remaining = Math.max(
         0,
-        this.#getClusterCap() - this.#getActiveClusterCount()
+        this.#getClusterCap() - this.#getActiveClusterCount(),
       );
       if (remaining > 0) {
         const { cell } = this.#getNearestCellToPoint(x, y);
@@ -1736,7 +1743,7 @@ class Hive {
 
     let coverageCap = Math.max(
       1,
-      Math.floor(desiredActiveCells / Math.max(1, avgClusterCells))
+      Math.floor(desiredActiveCells / Math.max(1, avgClusterCells)),
     );
 
     coverageCap = Math.min(coverageCap, CLUSTER_SAFETY_CAP); // safety upper bound
@@ -1783,8 +1790,8 @@ class Hive {
           this.honeyCombGrid,
           false,
           this.fps * 20, // 20 seconds time alive
-          this.fps * 15 // 15 seconds cool down time
-        )
+          this.fps * 15, // 15 seconds cool down time
+        ),
       );
     }
   }
@@ -1978,7 +1985,7 @@ class Hive {
         0.4 * t.scale,
         0,
         0,
-        Math.PI * 2
+        Math.PI * 2,
       );
       ctx.fill();
       ctx.stroke();
@@ -2040,14 +2047,14 @@ class Hive {
         bee.theta +
         Math.atan2(
           Math.sin(angleToTarget - bee.theta),
-          Math.cos(angleToTarget - bee.theta)
+          Math.cos(angleToTarget - bee.theta),
         ) *
           0.6;
 
       // Lift off; short snappy takeoff
       bee.enterState(
         animationType.takeoff,
-        Math.floor(30 + Math.random() * 30)
+        Math.floor(30 + Math.random() * 30),
       );
     }
   }
@@ -2101,7 +2108,7 @@ class Hive {
       ctx.fillText(
         `Cluster 1 Max Frames: ${cluster1.maximumLifeTime}`,
         this.canvasWidth - 40,
-        160
+        160,
       );
       if (
         cluster1.animationFrameCounter >=
@@ -2118,7 +2125,7 @@ class Hive {
           cluster1.maximumDistanceAndBorder * cluster1.delayTime
         }`,
         this.canvasWidth - 40,
-        200
+        200,
       );
       if (
         cluster1.animationFrameCounter >=
@@ -2137,13 +2144,13 @@ class Hive {
           cluster1.maximumDistanceAndBorder * cluster1.delayTime
         }`,
         this.canvasWidth - 40,
-        240
+        240,
       );
       ctx.fillStyle = "black";
       ctx.fillText(
         `Cluster 1 Max Distance and Border: ${cluster1.maximumDistanceAndBorder}`,
         this.canvasWidth - 40,
-        280
+        280,
       );
       ctx.fillStyle = "black";
       ctx.fillText(
@@ -2152,13 +2159,13 @@ class Hive {
           cluster1.maximumDistanceAndBorder * cluster1.delayTime
         }`,
         this.canvasWidth - 40,
-        320
+        320,
       );
       ctx.fillStyle = "black";
       ctx.fillText(
         `Cluster 1 Frame: ${cluster1.animationFrameCounter}`,
         this.canvasWidth - 40,
-        360
+        360,
       );
     }
     ctx.fillStyle = "black";
@@ -2167,25 +2174,25 @@ class Hive {
         this.honeyCombClusters.filter((c) => c.userSpawned).length
       }`,
       this.canvasWidth - 40,
-      400
+      400,
     );
     ctx.fillStyle = "black";
     ctx.fillText(
       `Cluster buget : ${this.#getClusterCap()}`,
       this.canvasWidth - 40,
-      440
+      440,
     );
     ctx.fillStyle = "black";
     ctx.fillText(
       `Animation frames : ${this.frameCounter}`,
       this.canvasWidth - 40,
-      480
+      480,
     );
     ctx.fillStyle = "black";
     ctx.fillText(
       `Seconds : ${Math.floor(this.frameCounter / this.fps)}`,
       this.canvasWidth - 40,
-      520
+      520,
     );
     ctx.restore();
   }
@@ -2252,7 +2259,7 @@ class Honeycomb {
     opacity: number = 1,
     type: cellType = cellType.empty,
     distanceFromCentrePiece: number = 0,
-    age: number = 0
+    age: number = 0,
   ) {
     this.q = q;
     this.r = r;
@@ -2415,7 +2422,7 @@ class HoneycombCluster {
     grid: HoneycombMap,
     active: boolean = true,
     visibleTime: number = 600,
-    cooldownFrames: number = 900
+    cooldownFrames: number = 900,
   ) {
     this.grid = grid;
     this.active = active;
@@ -2448,7 +2455,7 @@ class HoneycombCluster {
       this.visibleTime,
       this.fadeInTime,
       this.fadeOutTime,
-      this.delayTime
+      this.delayTime,
     );
     this.maximumLifeTime = this.#getMaximumLifeTime();
     this.#setCellType(this.cluster, this.centreCell);
@@ -2472,7 +2479,9 @@ class HoneycombCluster {
    */
   resetCluster(
     centreCell: Honeycomb,
-    opts: { visibleTime?: number; userSpawned?: boolean } = { visibleTime: 600 }
+    opts: { visibleTime?: number; userSpawned?: boolean } = {
+      visibleTime: 600,
+    },
   ) {
     const visibleTime = opts.visibleTime ? opts.visibleTime : 600;
     this.visibleTime = this.#randomWithin20Percent(visibleTime);
@@ -2495,7 +2504,7 @@ class HoneycombCluster {
   #growCluster(
     center: Honeycomb,
     grid: HoneycombMap,
-    size: number = 120
+    size: number = 120,
   ): HoneycombMap {
     const visited = new HoneycombMap();
     const result = new HoneycombMap();
@@ -2713,11 +2722,11 @@ class HoneycombCluster {
       cell.distanceFromCentrePiece = this.#axialDistance(centre, cell);
       this.maximumDistance = Math.max(
         this.maximumDistance,
-        cell.distanceFromCentrePiece
+        cell.distanceFromCentrePiece,
       );
       this.maximumDistanceAndBorder = Math.max(
         this.maximumDistanceAndBorder,
-        cell.distanceFromCentrePiece + cell.border
+        cell.distanceFromCentrePiece + cell.border,
       );
     });
   }
@@ -2748,7 +2757,7 @@ class HoneycombCluster {
     visibleTime: number,
     fadeInTime: number,
     fadeOutTime: number,
-    delayTime: number
+    delayTime: number,
   ): number {
     const maxDelay = delayTime * maximumDistanceAndBorder;
     const timeToLoad = fadeInTime + fadeOutTime + maxDelay;
@@ -2783,7 +2792,7 @@ class HoneycombCluster {
           return neighbour ? [`${neighbourQ},${neighbourR}`, neighbour] : null;
           // return grid.getAt(neighbourQ, neighbourR);
         })
-        .filter((entry): entry is [string, Honeycomb] => !!entry)
+        .filter((entry): entry is [string, Honeycomb] => !!entry),
     );
   }
 
@@ -3008,7 +3017,7 @@ class Bee {
     y: number,
     size: number,
     type = beeType.worker,
-    animation = animationType.walk
+    animation = animationType.walk,
   ) {
     this.x = x;
     this.y = y;
@@ -3118,7 +3127,7 @@ class Bee {
         5 * baseScale * shadowScale,
         0,
         0,
-        Math.PI * 2
+        Math.PI * 2,
       );
 
       // Lighter fill so the actual shape doesn’t completely mask the shadow halo
@@ -3158,7 +3167,7 @@ class Bee {
 
     // Oscillating gait phase (smooth swing)
     const gaitPhase = Math.sin(
-      this.legGaitCounter * LEGS.GAIT_SPEED + this.gaitOffset
+      this.legGaitCounter * LEGS.GAIT_SPEED + this.gaitOffset,
     );
 
     // Tripod logic: A and B alternate
@@ -3172,7 +3181,7 @@ class Bee {
       femurA: number,
       tibiaA: number,
       femurLen: number,
-      tibiaLen: number
+      tibiaLen: number,
     ) {
       const jointX = baseX + Math.cos(femurA) * femurLen;
       const jointY = baseY + Math.sin(femurA) * femurLen;
@@ -3182,7 +3191,7 @@ class Bee {
       ctx.lineTo(jointX, jointY);
       ctx.lineTo(
         jointX + Math.cos(tibiaA) * tibiaLen,
-        jointY + Math.sin(tibiaA) * tibiaLen
+        jointY + Math.sin(tibiaA) * tibiaLen,
       );
       ctx.stroke();
     }
@@ -3304,7 +3313,7 @@ class Bee {
       1.2 * scale,
       0.4,
       0,
-      Math.PI * 2
+      Math.PI * 2,
     );
     ctx.fill();
 
@@ -3316,7 +3325,7 @@ class Bee {
       1.2 * scale,
       -0.4,
       0,
-      Math.PI * 2
+      Math.PI * 2,
     );
     ctx.fill();
 
@@ -3382,7 +3391,7 @@ class Bee {
       restingAngle: number,
       sweepAngle: number,
       sideSign: 1 | -1,
-      alpha: number
+      alpha: number,
     ) {
       const flapAngle = sideSign > 0 ? sweepAngle : -sweepAngle;
       const rest = sideSign > 0 ? restingAngle : -restingAngle;
@@ -3403,7 +3412,7 @@ class Bee {
         ry,
         rest,
         0,
-        Math.PI * 2
+        Math.PI * 2,
       );
       ctx.stroke();
       ctx.fill();
@@ -3432,7 +3441,7 @@ class Bee {
         hindRest,
         hindRestSweep,
         -1,
-        0.3
+        0.3,
       );
       drawWingAt(
         foreCX,
@@ -3442,7 +3451,7 @@ class Bee {
         foreRest,
         foreRestSweep,
         -1,
-        0.5
+        0.5,
       );
       // RIGHT hind & fore
       drawWingAt(
@@ -3453,7 +3462,7 @@ class Bee {
         hindRest,
         hindRestSweep,
         1,
-        0.3
+        0.3,
       );
       drawWingAt(
         foreCX,
@@ -3463,7 +3472,7 @@ class Bee {
         foreRest,
         foreRestSweep,
         1,
-        0.5
+        0.5,
       );
     } else {
       // --- FLAPPING WINGS (asymmetric stroke + hamuli coupling) ---
@@ -3473,9 +3482,9 @@ class Bee {
         this.animation === animationType.flutter
           ? WINGS.FLAP_HZ.FLUTTER
           : this.animation === animationType.fly ||
-            this.animation === animationType.hover
-          ? WINGS.FLAP_HZ.FLY
-          : WINGS.FLAP_HZ.TAKEOFF_LAND;
+              this.animation === animationType.hover
+            ? WINGS.FLAP_HZ.FLY
+            : WINGS.FLAP_HZ.TAKEOFF_LAND;
       const t =
         (this.wingFlapCounter * baseFlapHz + this.flapOffset) % (Math.PI * 2);
       const phase01 = t / (Math.PI * 2); // 0..1
@@ -3519,7 +3528,7 @@ class Bee {
         restingAngle: number, // ellipse resting orientation
         sweepAngle: number, // current stroke angle (0.2..1.5, etc.)
         sideSign: 1 | -1, // +1 right, -1 left (mirrors)
-        baseAlpha: number
+        baseAlpha: number,
       ) {
         // Current angle for this mirrored side
         const flapAngle = sideSign > 0 ? sweepAngle : -sweepAngle;
@@ -3556,7 +3565,7 @@ class Bee {
             ry,
             rest,
             0,
-            Math.PI * 2
+            Math.PI * 2,
           );
           ctx.stroke();
           ctx.fill();
@@ -3573,7 +3582,7 @@ class Bee {
         hindRest,
         hindWingAngle,
         -1,
-        0.45
+        0.45,
       );
       drawWingSwept(
         foreCX,
@@ -3583,7 +3592,7 @@ class Bee {
         foreRest,
         foreWingAngle,
         -1,
-        0.55
+        0.55,
       );
       // RIGHT hind & fore
       drawWingSwept(
@@ -3594,7 +3603,7 @@ class Bee {
         hindRest,
         hindWingAngle,
         1,
-        0.35
+        0.35,
       );
       drawWingSwept(
         foreCX,
@@ -3604,7 +3613,7 @@ class Bee {
         foreRest,
         foreWingAngle,
         1,
-        0.55
+        0.55,
       );
     }
 
@@ -3644,7 +3653,7 @@ class Bee {
       this.y,
       this.size,
       -0.3 + this.theta, // + this.headOffset,
-      0.3 + this.theta // + this.headOffset
+      0.3 + this.theta, // + this.headOffset
     ); // head segment (small arc)
     ctx.strokeStyle = "red";
     ctx.stroke();
@@ -3718,7 +3727,7 @@ class Bee {
     const angleToTarget = this.#getAngleToTarget(this, { x: tx, y: ty });
     const angleDiff = Math.atan2(
       Math.sin(angleToTarget - this.theta),
-      Math.cos(angleToTarget - this.theta)
+      Math.cos(angleToTarget - this.theta),
     );
     const grounded = this.z < 0.3;
     const k =
@@ -3727,9 +3736,9 @@ class Bee {
         this.animation === animationType.blocked)
         ? 0
         : this.animation === animationType.fly ||
-          this.animation === animationType.walk
-        ? 0.02
-        : 0.01;
+            this.animation === animationType.walk
+          ? 0.02
+          : 0.01;
     this.theta += angleDiff * k;
 
     // arrival tracking
@@ -3749,7 +3758,7 @@ class Bee {
    */
   #getAngleToTarget(
     from: { x: number; y: number },
-    to: { x: number; y: number }
+    to: { x: number; y: number },
   ): number {
     return Math.atan2(to.y - from.y, to.x - from.x);
   }
@@ -3844,7 +3853,7 @@ class Bee {
         if (this.stateCounter > 30 && r < 0.005) {
           this.enterState(
             animationType.idle,
-            Math.floor(300 + rt * 30) // duration 5-5.5s
+            Math.floor(300 + rt * 30), // duration 5-5.5s
           );
           break;
         }
@@ -3853,7 +3862,7 @@ class Bee {
           if (r < 0.1) {
             this.enterState(
               animationType.turn,
-              Math.floor(30 + rt * 60) //duration 0.5-1.5s
+              Math.floor(30 + rt * 60), //duration 0.5-1.5s
             );
           } else if (r < 0.15) {
             this.enterState(animationType.takeoff, Math.floor(40 + rt * 40));
@@ -3977,8 +3986,8 @@ class Bee {
     const turnedAmt = Math.abs(
       Math.atan2(
         Math.sin(this.theta - wasTheta),
-        Math.cos(this.theta - wasTheta)
-      )
+        Math.cos(this.theta - wasTheta),
+      ),
     );
 
     this.onGround = this.z < 0.3;
@@ -4103,7 +4112,7 @@ class Bee {
     ctx.fillText(
       this.animation,
       this.x + this.size / 2,
-      this.y + this.size * 1.5
+      this.y + this.size * 1.5,
     );
     ctx.restore();
   }

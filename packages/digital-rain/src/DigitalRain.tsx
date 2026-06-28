@@ -59,12 +59,12 @@ export type DigitalRainOptions = {
   numberOfRandomCellsInColumns?: number;
   staticMessages?: Array<string>;
   staticMessagesDelaySec?: number; // Seconds before staticMessages start rendering (default 0)
-  qrValue?: string;    // Content to encode as a QR code overlay
+  qrValue?: string; // Content to encode as a QR code overlay
   qrDelaySec?: number; // Seconds before qrValue starts rendering (default 0)
-  qrScale?: number;    // Characters per QR module — omit to auto-fit
+  qrScale?: number; // Characters per QR module — omit to auto-fit
   qrOffAlpha?: number; // Per-frame black overlay alpha on off-modules (0–1, default 0.95)
   qrQuietZone?: number; // Quiet-zone width in QR modules (default 1)
-  qrColor?: string;    // Colour for on-module characters (default "#0aff0a")
+  qrColor?: string; // Colour for on-module characters (default "#0aff0a")
   qrStaticChar?: boolean; // When true, on-module cells render "■" instead of random chars
   onShowSourceCode?: () => void;
   onHideSourceCode?: () => void;
@@ -243,7 +243,6 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
 
     themeColorRef.current = null;
   };
-
 
   // Update display items, set all others to false by default
   const displayItemChange = (item: string, show: boolean) => {
@@ -905,7 +904,8 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
                 <tr>
                   <td>~ % set staticMessages w1 w2 w3</td>
                   <td style={{ paddingLeft: "1em" }}>
-                    Set messages (space-separated words, or &quot;quoted strings&quot;)
+                    Set messages (space-separated words, or &quot;quoted
+                    strings&quot;)
                   </td>
                 </tr>
                 <tr>
@@ -1001,10 +1001,10 @@ class Symbol {
   changeCharacterFrequency: number;
   changeCharacterDuration: number;
   fixedChar?: string;
-  qrAlpha?: number;  // undefined = normal cell | 0 = on-module (no fade) | >0 = off-module (suppressed)
-  qrColor?: string;  // on-module character colour override
-  qrStaticChar: boolean;  // when true and on-module, render a fixed "■" instead of random chars
-  qrRevealed: boolean;  // latched true once the rain head sweeps past this cell post qrActive — gates QR behaviour to avoid the all-cell flash at delay elapse
+  qrAlpha?: number; // undefined = normal cell | 0 = on-module (no fade) | >0 = off-module (suppressed)
+  qrColor?: string; // on-module character colour override
+  qrStaticChar: boolean; // when true and on-module, render a fixed "■" instead of random chars
+  qrRevealed: boolean; // latched true once the rain head sweeps past this cell post qrActive — gates QR behaviour to avoid the all-cell flash at delay elapse
 
   constructor(
     x: number,
@@ -1079,9 +1079,7 @@ class Symbol {
       } else if (isStaticQrSeed) {
         this.text = "■";
       } else {
-        this.text = CHAR_POOL.charAt(
-          Math.floor(Math.random() * CHAR_POOL_LEN),
-        );
+        this.text = CHAR_POOL.charAt(Math.floor(Math.random() * CHAR_POOL_LEN));
       }
     } else if (
       changeCharacter &&
@@ -1091,9 +1089,7 @@ class Symbol {
       const lockedFixed = canBeStatic && this.text === this.fixedChar;
       const lockedQr = isStaticQrSeed && this.text === "■";
       if (!lockedFixed && !lockedQr) {
-        this.text = CHAR_POOL.charAt(
-          Math.floor(Math.random() * CHAR_POOL_LEN),
-        );
+        this.text = CHAR_POOL.charAt(Math.floor(Math.random() * CHAR_POOL_LEN));
       }
     }
 
@@ -1143,7 +1139,8 @@ class Symbol {
         );
       } else {
         // QR on-module cells draw in qrColor when active; otherwise classic green.
-        ctx.fillStyle = canBeQrOnModule && this.qrColor ? this.qrColor : "#0aff0a";
+        ctx.fillStyle =
+          canBeQrOnModule && this.qrColor ? this.qrColor : "#0aff0a";
         drawCharacter(
           ctx,
           this.text,
@@ -1169,7 +1166,8 @@ class Symbol {
         this.fontSize,
       );
 
-      ctx.fillStyle = canBeQrOnModule && this.qrColor ? this.qrColor : "#0aff0a";
+      ctx.fillStyle =
+        canBeQrOnModule && this.qrColor ? this.qrColor : "#0aff0a";
       // Draw the symbol
       drawCharacter(
         ctx,
