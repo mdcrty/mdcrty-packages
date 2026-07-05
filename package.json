@@ -27,9 +27,11 @@
   "devDependencies": {
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "tsup": "^8.0.0",
     "typescript": "^5.9.3"
   },
   "allowScripts": {
-    "esbuild": true
+    "esbuild": true,
+    "fsevents": true
   }
 }

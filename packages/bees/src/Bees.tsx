@@ -64,8 +64,9 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { createNoise2D } from "simplex-noise";
-import cx from "clsx";
 import classes from "./Bees.module.css";
+
+const cx = (...args: (string | undefined)[]) => args.filter(Boolean).join(" ");
 
 const noise2D = createNoise2D();
 
