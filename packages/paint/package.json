@@ -1,0 +1,48 @@
+{
+  "name": "@mdcrty/paint",
+  "version": "0.1.0",
+  "description": "A zero-dependency React canvas paint component with customisable controls.",
+  "keywords": [
+    "react",
+    "canvas",
+    "paint",
+    "drawing",
+    "sketch"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "react": ">=18.0.0 <20.0.0",
+    "react-dom": ">=18.0.0 <20.0.0"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdcrty/mdcrty-packages.git",
+    "directory": "packages/paint"
+  },
+  "bugs": {
+    "url": "https://github.com/mdcrty/mdcrty-packages/issues"
+  },
+  "homepage": "https://github.com/mdcrty/mdcrty-packages/tree/main/packages/paint#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "devDependencies": {}
+}
