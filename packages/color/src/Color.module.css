@@ -1,0 +1,501 @@
+.inner {
+  width: 100%;
+  padding: 1em;
+}
+
+.ripple {
+  border-radius: 50%;
+  height: 0;
+  position: fixed;
+  transform: scale(0);
+  width: 0;
+  will-change: transform;
+  pointer-events: none;
+  z-index: -1;
+}
+@-webkit-keyframes ripple {
+  100% {
+    transform: scale(2);
+  }
+}
+@-moz-keyframes ripple {
+  100% {
+    transform: scale(2);
+  }
+}
+@keyframes ripple {
+  100% {
+    transform: scale(2);
+  }
+}
+.ripple {
+  animation: ripple 0.5s linear;
+}
+
+/* ─── Rainbow trigger ────────────────────────────────────────────────────── */
+
+.pickerTriggerWrap {
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-radius 150ms ease;
+}
+
+.pickerTriggerWrapOpen {
+  border-radius: 4px 4px 0 0;
+}
+
+.pickerTrigger {
+  width: 100%;
+  height: 28px;
+  border-radius: 0;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0;
+  background: linear-gradient(
+    to right,
+    #f00,
+    #ff0,
+    #0f0,
+    #0ff,
+    #00f,
+    #f0f,
+    #f00
+  );
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  opacity: 0.85;
+  transition:
+    opacity 150ms ease,
+    border-color 150ms ease;
+}
+
+.pickerTriggerColor {
+  position: absolute;
+  inset: 0;
+  opacity: 0.75;
+  transition: opacity 150ms ease;
+}
+
+.pickerTrigger:hover {
+  opacity: 1;
+}
+
+.pickerTriggerOpen {
+  opacity: 1;
+  background: transparent;
+  border-bottom-color: transparent;
+}
+
+.pickerTriggerOpen,
+:global(body.light) .pickerTriggerOpen {
+  border-top-color: rgba(0, 0, 0, 0.2);
+  border-left-color: rgba(0, 0, 0, 0.2);
+  border-right-color: rgba(0, 0, 0, 0.2);
+}
+
+:global(body.dark) .pickerTriggerOpen {
+  border-top-color: rgba(255, 255, 255, 0.35);
+  border-left-color: rgba(255, 255, 255, 0.35);
+  border-right-color: rgba(255, 255, 255, 0.35);
+}
+
+.pickerChevron {
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+  transition:
+    transform 280ms ease,
+    color 150ms ease,
+    filter 150ms ease;
+}
+
+.pickerChevron.pickerChevronOpen {
+  color: black;
+  filter: none;
+}
+
+:global(body.dark) .pickerTriggerOpen .pickerChevron {
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+}
+
+.pickerChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ─── Picker panel collapse ──────────────────────────────────────────────── */
+
+.pickerWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+  margin-bottom: 14px;
+}
+
+.pickerOpen {
+  grid-template-rows: 1fr;
+  margin-bottom: 20px;
+}
+
+.pickerInner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 12px;
+}
+
+/* ─── Gradient square ────────────────────────────────────────────────────── */
+
+.pickerSquareWrap {
+  margin: 0 -12px;
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #bbb 25%, transparent 25%),
+    linear-gradient(-45deg, #bbb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #bbb 75%),
+    linear-gradient(-45deg, transparent 75%, #bbb 75%);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0px;
+}
+
+.pickerSquare {
+  width: 100%;
+  height: 200px;
+  position: relative;
+  cursor: crosshair;
+  border-radius: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.pickerSquareWhite {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+}
+
+.pickerSquareBlack {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1));
+  pointer-events: none;
+}
+
+.pickerCursor {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ─── Hue bar ────────────────────────────────────────────────────────────── */
+
+.hueBar {
+  height: 14px;
+  border-radius: 7px;
+  position: relative;
+  cursor: pointer;
+  margin-top: 14px;
+  touch-action: none;
+  user-select: none;
+}
+
+.hueThumb {
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ─── Alpha bar ──────────────────────────────────────────────────────────── */
+
+.alphaBarWrap {
+  height: 14px;
+  border-radius: 7px;
+  position: relative;
+  margin-top: 10px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  /* checkerboard */
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #bbb 25%, transparent 25%),
+    linear-gradient(-45deg, #bbb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #bbb 75%),
+    linear-gradient(-45deg, transparent 75%, #bbb 75%);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0px;
+}
+
+.alphaBar {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+}
+
+.alphaRangeInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Format tabs ────────────────────────────────────────────────────────── */
+
+.sliderTabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.sliderTabRow {
+  display: flex;
+  gap: 4px;
+}
+
+.sliderTab {
+  flex: 1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  color: inherit;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.sliderTab:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.sliderTabActive {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Channel sliders ────────────────────────────────────────────────────── */
+
+.sliders {
+  margin-top: 10px;
+  min-height: 128px; /* 4 rows × 32px — prevents height jump when switching formats */
+}
+
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+}
+
+.sliderLabel {
+  width: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.5;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.sliderTrackWrap {
+  position: relative;
+  flex: 1;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.sliderTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.sliderThumbEl {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.sliderNative {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+.sliderValue {
+  width: 40px;
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* ─── Input grid ─────────────────────────────────────────────────────────── */
+
+.inputGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1em;
+}
+
+.inputItem {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.4);
+  transition: border-color 0.15s ease;
+}
+
+.inputItem:focus-within {
+  border-bottom-color: rgba(0, 0, 0, 0.8);
+}
+
+.inputItemWide {
+  grid-column: 1 / -1;
+}
+
+.inputItemWide .input {
+  font-size: rem(26px);
+  line-height: rem(36px);
+  text-align: center;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  font-size: rem(14px);
+  line-height: rem(24px);
+  background: transparent;
+  border: none;
+  padding: var(--mantine-spacing-xs) 0;
+  border-radius: 0;
+  transition-duration: 0.5s;
+  transition-delay: 0;
+  transition-timing-function: ease-out;
+  transition-property: color;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.2;
+  padding: 0;
+  transition:
+    opacity 120ms ease,
+    color 120ms ease;
+}
+
+.copyBtn:hover {
+  opacity: 0.6;
+}
+
+.copyBtn:disabled {
+  opacity: 0.08;
+  cursor: default;
+}
+
+.copyBtnDone {
+  opacity: 1;
+  color: #2e7d32;
+}
+
+/* ─── Dark mode ──────────────────────────────────────────────────────────── */
+
+:global(body.dark) .inner,
+:global(body.dark) .input {
+  color: white;
+}
+
+:global(body.dark) .inputItem {
+  border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+:global(body.dark) .inputItem:focus-within {
+  border-bottom-color: rgba(255, 255, 255, 0.7);
+}
+
+:global(body.dark) .sliderTab {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:global(body.dark) .sliderTab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+:global(body.dark) .sliderTabActive {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.5);
+}

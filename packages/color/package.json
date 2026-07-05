@@ -1,0 +1,47 @@
+{
+  "name": "@mdcrty/color",
+  "version": "0.1.0",
+  "description": "A zero-dependency React colour picker and converter component.",
+  "keywords": [
+    "react",
+    "color",
+    "colour",
+    "picker",
+    "converter"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "react": ">=18.0.0 <20.0.0",
+    "react-dom": ">=18.0.0 <20.0.0"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdcrty/mdcrty-packages.git",
+    "directory": "packages/color"
+  },
+  "bugs": {
+    "url": "https://github.com/mdcrty/mdcrty-packages/issues"
+  },
+  "homepage": "https://github.com/mdcrty/mdcrty-packages/tree/main/packages/color#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
+}
