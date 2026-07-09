@@ -1,6 +1,17 @@
 "use client"; // Must be client, extensive use of client only functions in react
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+
+// useLayoutEffect warns during SSR; on the server it never fires anyway
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
 import { useSourceCode } from "./source-code/SourceCodeContext";
 import QRCode from "qrcode";
 
@@ -171,6 +182,38 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
   const effectRef = useRef<Effect | null>(null);
 
   const themeColorRef = useRef<string | null>(null);
+  const bodyBgColorRef = useRef<string | null>(null);
+  const portalHostRef = useRef<HTMLDivElement | null>(null);
+
+  // Create the portal host synchronously on the first client render (detached
+  // from the DOM) so the canvas exists on the very first commit — the mount
+  // effects below (canvas sizing, autoRun start) depend on that. The ref guard
+  // keeps this idempotent across re-renders and StrictMode double-renders.
+  if (typeof document !== "undefined" && portalHostRef.current === null) {
+    const host = document.createElement("div");
+    host.setAttribute("data-mdcrty", "digital-rain-host");
+
+    // This host should not affect layout at all
+    host.style.position = "absolute";
+    host.style.top = "0";
+    host.style.left = "0";
+    host.style.width = "0";
+    host.style.height = "0";
+
+    portalHostRef.current = host;
+  }
+
+  // Attach the host as the first child of <body> before the browser paints
+  // (layout effect), so the overlay never flashes in a frame late. The host is
+  // kept on the ref across StrictMode unmount/remount cycles.
+  useIsomorphicLayoutEffect(() => {
+    const host = portalHostRef.current;
+    if (host === null) return;
+    document.body.prepend(host);
+    return () => {
+      host.remove();
+    };
+  }, []);
 
   // Set states for application
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -213,9 +256,13 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
         themeColorRef.current = meta.getAttribute("content");
       }
     }
-    // set body background color to black
-    if (document.querySelector("body") !== null) {
-      document.querySelector("body")!.style.backgroundColor = "#000000";
+    // set body background color to black, remembering any inline value
+    const body = document.querySelector("body");
+    if (body !== null) {
+      if (bodyBgColorRef.current === null) {
+        bodyBgColorRef.current = body.style.backgroundColor;
+      }
+      body.style.backgroundColor = "#000000";
     }
     meta.setAttribute("content", "#000000");
   };
@@ -236,10 +283,12 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
         meta.setAttribute("content", prev);
       }
     }
-    // remove background color on body element
-    if (document.querySelector("body") !== null) {
-      document.querySelector("body")!.style.backgroundColor = "";
+    // restore any previous inline background color on body element
+    const body = document.querySelector("body");
+    if (body !== null && bodyBgColorRef.current !== null) {
+      body.style.backgroundColor = bodyBgColorRef.current;
     }
+    bodyBgColorRef.current = null;
 
     themeColorRef.current = null;
   };
@@ -773,7 +822,7 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
   }, [inputOpen, inputRef]);
 
   // Output the ReactNode HTML
-  return (
+  const overlay = (
     <>
       {/* Div to encompas entire window for digital rain effect */}
       <div
@@ -987,6 +1036,12 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
       />
     </>
   );
+
+  // Server render: no document, no host — render nothing. Portals mount
+  // client-side only; the layout effect above attaches the host before paint.
+  if (portalHostRef.current === null) return <></>;
+
+  return createPortal(overlay, portalHostRef.current);
 }
 
 /**

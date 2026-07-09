@@ -210,33 +210,12 @@ return isVisible ? <MySourceCodePanel /> : null;
 
 ---
 
-## File structure
-
-```
-src/
-  DigitalRain.tsx
-  index.ts
-  source-code/
-    SourceCodeContext.tsx
-dist/
-README.md
-package.json
-```
-
----
-
-## Build
-
-```
-npm run build
-```
-
-Outputs to `dist/`:
-- ES module: `index.js`
-- Type declarations: `index.d.ts`
-
----
-
 ## License
 
 MIT © mdcrty
+
+## Links
+
+- Demo: https://mediocrity.media/digital-rain/
+- GitHub: https://github.com/mdcrty/mdcrty-packages
+- npm: https://www.npmjs.com/package/@mdcrty/digital-rain
