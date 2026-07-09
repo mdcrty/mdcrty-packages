@@ -86,5 +86,6 @@ These behaviours are deliberate and tested across environments.
 MIT © mdcrty
 
 ## Links
+- Demo: https://mediocrity.media/beez/
 - GitHub: https://github.com/mdcrty/mdcrty-packages
 - npm: https://www.npmjs.com/package/@mdcrty/bees

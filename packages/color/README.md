@@ -2,19 +2,17 @@
 
 A zero-dependency React colour picker and converter. Converts between hex, RGB, HSL, HSV, LAB, LCH, OKLCH, HWB, and CMYK. Includes a visual picker (gradient square + hue + alpha bars), per-format text inputs with copy buttons, and an optional full-page ripple background mode.
 
+## Demo
+
+[mediocrity.media/color](https://mediocrity.media/color/)
+
 ## Installation
 
 ```bash
 npm install @mdcrty/color
 ```
 
-Import the stylesheet alongside the component — required for all visual styles:
-
-```ts
-import "@mdcrty/color/dist/Color.module-*.module.css";
-```
-
-> The CSS filename includes a content hash. Check `node_modules/@mdcrty/color/dist/` for the exact filename, or use a glob import if your bundler supports it.
+Peer dependencies: `react >= 18`, `react-dom >= 18`
 
 ## Usage
 
@@ -99,3 +97,9 @@ console.log(color.rgb.print()); // rgb(230, 214, 184)
 console.log(color.hsl.print()); // hsl(38, 44%, 81%)
 console.log(color.lab.print()); // lab(87, 2, 16)
 ```
+
+## Links
+
+- Demo: https://mediocrity.media/color/
+- GitHub: https://github.com/mdcrty/mdcrty-packages
+- npm: https://www.npmjs.com/package/@mdcrty/color

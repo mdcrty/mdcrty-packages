@@ -1,6 +1,6 @@
 {
   "name": "@mdcrty/color",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A zero-dependency React colour picker and converter component.",
   "keywords": [
     "react",

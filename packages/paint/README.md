@@ -2,6 +2,10 @@
 
 A zero-dependency React canvas paint component with built-in brush, eraser, and bucket fill tools.
 
+## Demo
+
+[mediocrity.media/draw](https://mediocrity.media/draw/)
+
 ---
 
 ## Features
@@ -169,5 +173,6 @@ MIT © mdcrty
 
 ## Links
 
+- Demo: https://mediocrity.media/draw/
 - GitHub: https://github.com/mdcrty/mdcrty-packages
 - npm: https://www.npmjs.com/package/@mdcrty/paint
