@@ -80,6 +80,34 @@ const myClasses: ColorClassNames = {
 | `inputGrid` | Grid wrapping all format inputs |
 | `input` | Each format text input |
 | `copyBtn` | Copy-to-clipboard button beside each input |
+| `squareCursor` | The circular cursor ring on the gradient square |
+| `hueThumb` | The circular thumb on the hue bar |
+| `alphaThumb` | The circular thumb on the alpha bar |
+| `sliderThumb` | The circular thumb on each channel slider |
+
+The four circle slots are handy for theming the picker against dark hosts — the built-in circles are white. The `squareCursor` is a ring (style its `border-color`); the three thumbs are discs (style their `background`):
+
+```css
+/* my-page.module.css — grey circles when the host is in dark mode */
+:global(body.dark) .thumb {
+  background: #d5d2ca;
+}
+:global(body.dark) .cursor {
+  border-color: #d5d2ca;
+}
+```
+
+```tsx
+<Color
+  input
+  classNames={{
+    squareCursor: styles.cursor,
+    hueThumb: styles.thumb,
+    alphaThumb: styles.thumb,
+    sliderThumb: styles.thumb,
+  }}
+/>
+```
 
 ## Dark / light mode
 
