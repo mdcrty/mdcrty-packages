@@ -48,6 +48,7 @@ function SliderRow({
   gradient,
   formatter,
   onChange,
+  thumbClassName,
 }: {
   label: string;
   value: number;
@@ -57,6 +58,7 @@ function SliderRow({
   gradient: string;
   formatter?: (v: number) => string;
   onChange: (v: number) => void;
+  thumbClassName?: string;
 }) {
   const safe = isNaN(value) ? 0 : value;
   const pct = ((safe - min) / (max - min)) * 100;
@@ -65,7 +67,10 @@ function SliderRow({
       <span className={classes.sliderLabel}>{label}</span>
       <div className={classes.sliderTrackWrap}>
         <div className={classes.sliderTrack} style={{ background: gradient }} />
-        <div className={classes.sliderThumbEl} style={{ left: `${pct}%` }} />
+        <div
+          className={cx(classes.sliderThumbEl, thumbClassName)}
+          style={{ left: `${pct}%` }}
+        />
         <input
           type="range"
           min={min}
@@ -121,6 +126,14 @@ export type ColorClassNames = {
   input?: string;
   /** Copy-to-clipboard button beside each input. */
   copyBtn?: string;
+  /** The circular cursor on the gradient square. */
+  squareCursor?: string;
+  /** The circular thumb on the hue bar. */
+  hueThumb?: string;
+  /** The circular thumb on the alpha bar. */
+  alphaThumb?: string;
+  /** The circular thumb on each channel slider. */
+  sliderThumb?: string;
 };
 
 export type ColorProps = {
@@ -318,6 +331,7 @@ export default function Color({
       return (
         <>
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="R"
             value={r}
             max={255}
@@ -326,6 +340,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("rgb", "r", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="G"
             value={g}
             max={255}
@@ -334,6 +349,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("rgb", "g", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="B"
             value={b}
             max={255}
@@ -349,6 +365,7 @@ export default function Color({
       return (
         <>
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="H"
             value={h}
             max={360}
@@ -357,6 +374,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("hsl", "h", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="S"
             value={s}
             max={100}
@@ -365,6 +383,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("hsl", "s", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="L"
             value={l}
             max={100}
@@ -380,6 +399,7 @@ export default function Color({
       return (
         <>
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="H"
             value={h}
             max={360}
@@ -388,6 +408,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("hsv", "h", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="S"
             value={s}
             max={100}
@@ -396,6 +417,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("hsv", "s", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="V"
             value={v}
             max={100}
@@ -411,6 +433,7 @@ export default function Color({
       return (
         <>
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="L"
             value={l}
             max={100}
@@ -419,6 +442,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("lab", "l", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="A"
             value={a}
             min={-128}
@@ -427,6 +451,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("lab", "a", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="B"
             value={b}
             min={-128}
@@ -442,6 +467,7 @@ export default function Color({
       return (
         <>
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="L"
             value={l}
             max={100}
@@ -450,6 +476,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("lch", "l", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="C"
             value={c}
             max={150}
@@ -457,6 +484,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("lch", "c", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="H"
             value={h}
             max={360}
@@ -473,6 +501,7 @@ export default function Color({
       return (
         <>
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="L"
             value={l}
             max={100}
@@ -481,6 +510,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("oklch", "l", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="C"
             value={cSlider}
             max={40}
@@ -489,6 +519,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("oklch", "c", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="H"
             value={h}
             max={360}
@@ -504,6 +535,7 @@ export default function Color({
       return (
         <>
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="H"
             value={h}
             max={360}
@@ -512,6 +544,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("hwb", "h", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="W"
             value={w}
             max={100}
@@ -520,6 +553,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("hwb", "w", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="B"
             value={b}
             max={100}
@@ -535,6 +569,7 @@ export default function Color({
       return (
         <>
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="C"
             value={c}
             max={100}
@@ -543,6 +578,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("cmyk", "c", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="M"
             value={m}
             max={100}
@@ -551,6 +587,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("cmyk", "m", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="Y"
             value={y}
             max={100}
@@ -559,6 +596,7 @@ export default function Color({
             onChange={(v) => handleChannelSlider("cmyk", "y", v)}
           />
           <SliderRow
+            thumbClassName={classNames.sliderThumb}
             label="K"
             value={k}
             max={100}
@@ -748,7 +786,7 @@ export default function Color({
             <div className={classes.pickerSquareWhite} />
             <div className={classes.pickerSquareBlack} />
             <div
-              className={classes.pickerCursor}
+              className={cx(classes.pickerCursor, classNames.squareCursor)}
               style={{ left: `${sat}%`, top: `${100 - val}%` }}
             />
           </div>
@@ -761,7 +799,7 @@ export default function Color({
           onPointerDown={handleHuePointerDown}
         >
           <div
-            className={classes.hueThumb}
+            className={cx(classes.hueThumb, classNames.hueThumb)}
             style={{ left: `${(hue / 360) * 100}%` }}
           />
         </div>
@@ -773,7 +811,10 @@ export default function Color({
               background: `linear-gradient(to right, rgba(${curR},${curG},${curB},0), rgb(${curR},${curG},${curB}))`,
             }}
           />
-          <div className={classes.hueThumb} style={{ left: `${alpha}%` }} />
+          <div
+            className={cx(classes.hueThumb, classNames.alphaThumb)}
+            style={{ left: `${alpha}%` }}
+          />
           <input
             type="range"
             min={0}
@@ -927,7 +968,9 @@ export default function Color({
         >
           {swatchBtn}
           {pickerPanel}
-          <div className={cx(classes.inputGrid, classNames.inputGrid)}>{inputEls}</div>
+          <div className={cx(classes.inputGrid, classNames.inputGrid)}>
+            {inputEls}
+          </div>
         </div>
       )}
       {touch && <span ref={rippleSpanRef} />}
