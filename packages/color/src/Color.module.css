@@ -118,6 +118,10 @@
   filter: none;
 }
 
+:global(body.light) .pickerTriggerOpen .pickerChevron {
+  color: black;
+}
+
 :global(body.dark) .pickerTriggerOpen .pickerChevron {
   color: white;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
@@ -469,6 +473,37 @@
 .copyBtnDone {
   opacity: 1;
   color: #2e7d32;
+}
+
+/* ─── Light mode ──────────────────────────────────────────────────────────── */
+/* Mirrors the defaults above so the takeover is self-contained — without
+   these, a host in a dark colour scheme leaves inputs light-on-light. */
+
+:global(body.light) .inner,
+:global(body.light) .input {
+  color: black;
+}
+
+:global(body.light) .inputItem {
+  border-bottom-color: rgba(0, 0, 0, 0.4);
+}
+
+:global(body.light) .inputItem:focus-within {
+  border-bottom-color: rgba(0, 0, 0, 0.8);
+}
+
+:global(body.light) .sliderTab {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+:global(body.light) .sliderTab:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+:global(body.light) .sliderTabActive {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.5);
 }
 
 /* ─── Dark mode ──────────────────────────────────────────────────────────── */
