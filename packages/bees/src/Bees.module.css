@@ -30,8 +30,8 @@
 
 .closeButton {
   position: fixed;
-  top: 68px;
-  right: 8px;
+  top: 2em;
+  left: 2em;
 
   /* Ensure the close button is always clickable */
   pointer-events: auto;

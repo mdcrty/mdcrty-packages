@@ -25,6 +25,8 @@
  *     - idleDelaySec: number          // seconds of inactivity before auto‑start
  *     - clusterRampStartSec: number   // seconds before auto clusters begin
  *     - clusterRampStepSec: number    // cadence to allow more clusters
+ *     - closeButtonClassName: string  // extra class for the HexCloseButton (position override)
+ *     - closeButtonStyle: CSSProperties // inline style overrides for the HexCloseButton
  *
  * Imperative API (via ref): BeesHandle
  *   - play(): void     // schedule start after idleDelaySec (respects idle)
@@ -180,6 +182,10 @@ export type BeesProps = Readonly<{
   clusterRampStartSec?: number;
   clusterRampStepSec?: number;
   zIndex?: number;
+  /** Extra class for the HexCloseButton — use it to reposition the button (default: fixed, 2em top-left). */
+  closeButtonClassName?: string;
+  /** Inline style overrides for the HexCloseButton. */
+  closeButtonStyle?: React.CSSProperties;
 }>;
 
 /**
@@ -203,6 +209,8 @@ export type BeesProps = Readonly<{
  * @param {number}  [props.idleDelaySec=60]           - Seconds of inactivity before auto‑activate.
  * @param {number}  [props.clusterRampStartSec=20]    - Seconds before clusters begin auto-spawning.
  * @param {number}  [props.clusterRampStepSec=30]     - Seconds per additional cluster slot.
+ * @param {string}  [props.closeButtonClassName]      - Extra class for the HexCloseButton; use it to reposition the button (default: fixed, 2em from top-left).
+ * @param {object}  [props.closeButtonStyle]          - Inline style overrides for the HexCloseButton.
  * @returns {JSX.Element} The rendered Bee game element.
  */
 
@@ -218,6 +226,8 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
     clusterRampStartSec = 20,
     clusterRampStepSec = 30,
     zIndex = 1, // 👈 default “neutral”
+    closeButtonClassName,
+    closeButtonStyle,
   }: BeesProps,
   ref,
 ): JSX.Element {
@@ -732,9 +742,9 @@ const Bees = forwardRef<BeesHandle, BeesProps>(function Bees(
               }
             />
             <HexCloseButton
-              className={classes.closeButton}
+              className={cx(classes.closeButton, closeButtonClassName)}
               onClick={handleCloseClick}
-              style={{ zIndex: zIndex + 1 }}
+              style={{ zIndex: zIndex + 1, ...closeButtonStyle }}
             />
           </>
         )}

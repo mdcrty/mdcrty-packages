@@ -55,6 +55,8 @@ type BeesProps = {
   clusterRampStartSec?: number;
   clusterRampStepSec?: number;
   zIndex?: number;
+  closeButtonClassName?: string;
+  closeButtonStyle?: React.CSSProperties;
 };
 ```
 
@@ -66,6 +68,16 @@ Controls how the canvas layers relative to other content.
 <Bees zIndex={1} />      // neutral (default)
 <Bees zIndex={-1} />     // background
 <Bees zIndex={1000} />   // overlay
+```
+
+#### closeButtonClassName / closeButtonStyle
+Reposition or restyle the hex close button. By default it sits fixed at `2em` from the top-left of the viewport.
+```tsx
+// Move it to the top-right with a class...
+<Bees closeButtonClassName="my-close-button" />
+
+// ...or with inline styles
+<Bees closeButtonStyle={{ top: "1em", left: "auto", right: "1em" }} />
 ```
 
 #### idleDelaySec
