@@ -183,13 +183,15 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
 
   const themeColorRef = useRef<string | null>(null);
   const bodyBgColorRef = useRef<string | null>(null);
-  const portalHostRef = useRef<HTMLDivElement | null>(null);
 
-  // Create the portal host synchronously on the first client render (detached
-  // from the DOM) so the canvas exists on the very first commit — the mount
-  // effects below (canvas sizing, autoRun start) depend on that. The ref guard
-  // keeps this idempotent across re-renders and StrictMode double-renders.
-  if (typeof document !== "undefined" && portalHostRef.current === null) {
+  // Portal host lives in state and is created in the layout effect below, so
+  // the server render AND the hydration render both return nothing — keeping
+  // hydration clean. The setState inside the layout effect re-renders
+  // synchronously before the browser paints, so the overlay and canvas still
+  // exist by first paint (no late flash).
+  const [portalHost, setPortalHost] = useState<HTMLDivElement | null>(null);
+
+  useIsomorphicLayoutEffect(() => {
     const host = document.createElement("div");
     host.setAttribute("data-mdcrty", "digital-rain-host");
 
@@ -200,16 +202,10 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
     host.style.width = "0";
     host.style.height = "0";
 
-    portalHostRef.current = host;
-  }
-
-  // Attach the host as the first child of <body> before the browser paints
-  // (layout effect), so the overlay never flashes in a frame late. The host is
-  // kept on the ref across StrictMode unmount/remount cycles.
-  useIsomorphicLayoutEffect(() => {
-    const host = portalHostRef.current;
-    if (host === null) return;
+    // Attach as the first child of <body> before paint so the overlay never
+    // flashes in a frame late.
     document.body.prepend(host);
+    setPortalHost(host);
     return () => {
       host.remove();
     };
@@ -413,7 +409,9 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
 
-  // Effect to handle the canvas size and resizing window
+  // Effect to handle the canvas size and resizing window. Depends on
+  // portalHost because the canvas only exists once the portal has committed —
+  // the first (null) pass bails on the guard below and the effect re-runs.
   useEffect(() => {
     // Validate the canvas ref and
     if (canvasRef.current === null) return;
@@ -469,10 +467,13 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
       window.removeEventListener("resize", handleResize);
     };
     // Make the animation restart on any of the following changes
-  }, []);
+  }, [portalHost]);
 
   // Effect: first run and option-change restarts (no cleanup here)
   useEffect(() => {
+    // The canvas arrives one commit after mount (portal host is created in a
+    // layout effect); don't consume the autoRun first-run shot before then.
+    if (portalHost === null) return;
     // First run
     if (autoRun && !isRunning && !firstRunComplete) {
       startAnimation();
@@ -485,7 +486,7 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
       // NOTE: intentionally do NOT call clearAnimation(); preserves current frame if caller wants to freeze
       startAnimation();
     }
-  }, [firstRunComplete, isRunning, startAnimation, autoRun]);
+  }, [firstRunComplete, isRunning, startAnimation, autoRun, portalHost]);
 
   // Effect: unmount-only cleanup
   useEffect(() => {
@@ -778,7 +779,9 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
       input.removeEventListener("input", updateWidth);
       document.body.removeChild(measureSpan);
     };
-  }, [animationOptions.fontSize, inputRef, inputOpen]);
+    // portalHost dep: the input only exists once the portal has committed, so
+    // re-run then to size it before its first open (the null pass bails above).
+  }, [animationOptions.fontSize, inputRef, inputOpen, portalHost]);
 
   // Effect used to detect ~ key on the entire window
   useEffect(() => {
@@ -1037,11 +1040,12 @@ export default function DigitalRain(props: Readonly<DigitalRainOptions> = {}) {
     </>
   );
 
-  // Server render: no document, no host — render nothing. Portals mount
-  // client-side only; the layout effect above attaches the host before paint.
-  if (portalHostRef.current === null) return <></>;
+  // Server render AND hydration render: no host yet — render nothing, so the
+  // client's first render matches the server's and hydration stays clean. The
+  // layout effect above attaches the host and re-renders before first paint.
+  if (portalHost === null) return null;
 
-  return createPortal(overlay, portalHostRef.current);
+  return createPortal(overlay, portalHost);
 }
 
 /**
