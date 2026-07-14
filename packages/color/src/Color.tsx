@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import classes from "./Color.module.css";
 import { ColorObject } from "./colorObject";
 import colorBrightness from "./colorBrightness";
@@ -164,6 +164,7 @@ export default function Color({
   const hueBarRef = useRef<HTMLDivElement>(null);
 
   const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerPanelId = useId();
   const [hue, setHue] = useState(0);
   const [sat, setSat] = useState(0);
   const [val, setVal] = useState(100);
@@ -768,6 +769,7 @@ export default function Color({
 
   const pickerPanel = (
     <div
+      id={pickerPanelId}
       className={cx(
         classes.pickerWrap,
         pickerOpen ? classes.pickerOpen : undefined,
@@ -933,6 +935,8 @@ export default function Color({
           setPickerOpen((o) => !o);
         }}
         aria-label={pickerOpen ? "Close color picker" : "Open color picker"}
+        aria-expanded={pickerOpen}
+        aria-controls={pickerPanelId}
       >
         <svg
           className={cx(
