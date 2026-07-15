@@ -138,6 +138,9 @@
   position: absolute;
   top: 0;
   left: 0;
+  /* Hand all gestures on the drawing surface to the canvas so iOS/iPadOS
+     Safari doesn't hijack vertical drags for scroll / pull-to-refresh. */
+  touch-action: none;
 }
 
 /* Brush/eraser size preview — white inner ring + black outer ring, visible on any background */

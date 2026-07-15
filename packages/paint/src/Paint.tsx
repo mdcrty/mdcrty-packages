@@ -78,6 +78,22 @@ export type PaintProps = {
    */
   fillTolerance?: number;
   /**
+   * Vary stroke width with pen pressure. When enabled and a pen/stylus (e.g.
+   * Apple Pencil) is used, width is mapped between `markerWidth * minWidthRatio`
+   * and `markerWidth` by `PointerEvent.pressure`. Mouse and touch input always
+   * draw at `markerWidth`.
+   * @default true
+   */
+  pressure?: boolean;
+  /**
+   * Floor for the pressure→width mapping, as a fraction of `markerWidth` (only
+   * used when `pressure` is on and a pen is used). The lightest stroke is
+   * `markerWidth * minWidthRatio`; full pressure is `markerWidth`. Scaling the
+   * floor to the slider keeps the light/heavy feel consistent across sizes.
+   * @default 0.15
+   */
+  minWidthRatio?: number;
+  /**
    * Replace the built-in controls entirely with your own UI.
    * Receives all canvas state and action callbacks.
    */
@@ -205,6 +221,46 @@ function drawBezierPath(
     const d = (pts[i].y + pts[i + 1].y) / 2;
     ctx.quadraticCurveTo(pts[i].x, pts[i].y, c, d);
   }
+  ctx.quadraticCurveTo(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
+  ctx.stroke();
+}
+
+/**
+ * Draws a variable-width stroke where each point carries its own width `w`
+ * (from pointer pressure). Because a single canvas path can only have one
+ * `lineWidth`, each midpoint-smoothed segment is stroked individually with the
+ * average width of its endpoints; round caps/joins keep the segments continuous.
+ * Falls back to a filled dot for fewer than 3 points.
+ */
+function drawVariablePath(
+  ctx: CanvasRenderingContext2D,
+  pts: Array<{ x: number; y: number; w: number }>,
+) {
+  if (pts.length < 3) {
+    const b = pts[0];
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.w / 2, 0, Math.PI * 2, true);
+    ctx.fill();
+    ctx.closePath();
+    return;
+  }
+
+  let i;
+  for (i = 1; i < pts.length - 2; i++) {
+    const cx0 = (pts[i].x + pts[i + 1].x) / 2;
+    const cy0 = (pts[i].y + pts[i + 1].y) / 2;
+    const px = (pts[i - 1].x + pts[i].x) / 2;
+    const py = (pts[i - 1].y + pts[i].y) / 2;
+    ctx.beginPath();
+    ctx.lineWidth = (pts[i].w + pts[i + 1].w) / 2;
+    ctx.moveTo(px, py);
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, cx0, cy0);
+    ctx.stroke();
+  }
+  // Final segment to the last point
+  ctx.beginPath();
+  ctx.lineWidth = (pts[i].w + pts[i + 1].w) / 2;
+  ctx.moveTo((pts[i - 1].x + pts[i].x) / 2, (pts[i - 1].y + pts[i].y) / 2);
   ctx.quadraticCurveTo(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
   ctx.stroke();
 }
@@ -357,6 +413,8 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
     controls,
     colors = PAINT_MOCKDATA,
     fillTolerance: fillToleranceProp = 80,
+    pressure = true,
+    minWidthRatio = 0.15,
     renderControls,
     classNames = {},
   },
@@ -372,11 +430,16 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
   const [tmp_context, setTmpContext] =
     useState<CanvasRenderingContext2D | null>(null);
 
-  const cursorRef = useRef({ x: 0, y: 0 });
+  const cursorRef = useRef({ x: 0, y: 0, w: markerWidth });
   const canvas_ref = useRef<HTMLCanvasElement>(null);
   const tmp_canvas_ref = useRef<HTMLCanvasElement>(null);
   const customColorInputRef = useRef<HTMLInputElement>(null);
-  const pptsRef = useRef<Array<{ x: number; y: number }>>([]);
+  const pptsRef = useRef<Array<{ x: number; y: number; w: number }>>([]);
+  // A stroke is in progress (pointer captured). Replaces the old add/remove of
+  // the move listener — the persistent pointermove handler checks this.
+  const drawingRef = useRef(false);
+  // Whether the current stroke varies width with pressure (pen + `pressure`).
+  const strokeVariableRef = useRef(false);
   // Captured once on eraser mousedown; restored before each paint frame so
   // the eraser stroke is drawn directly on ctx with destination-out live.
   const eraserSnapshotRef = useRef<ImageData | null>(null);
@@ -445,20 +508,20 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
       tmp_ctx.fillStyle = marker;
     }
 
-    const cursorStart = (ev: MouseEvent | TouchEvent) => {
-      const rect = (ev.target as HTMLElement)?.getBoundingClientRect();
-      const isTouch = ev.type === "touchstart";
+    // Map a pointer event to a stroke width. Only pen input with `pressure`
+    // enabled varies width; mouse/touch always draw at markerWidth.
+    const widthFor = (ev: PointerEvent) => {
+      if (!pressure || ev.pointerType !== "pen") return markerWidth;
+      const floor = markerWidth * minWidthRatio;
+      return floor + ev.pressure * (markerWidth - floor);
+    };
 
-      let x: number, y: number;
-      if (isTouch) {
-        const tev = ev as TouchEvent;
-        x = tev.targetTouches[0].pageX - rect.left;
-        y = tev.targetTouches[0].pageY - rect.top;
-      } else {
-        const mev = ev as MouseEvent;
-        x = typeof mev.offsetX !== "undefined" ? mev.offsetX : mev.layerX;
-        y = typeof mev.offsetY !== "undefined" ? mev.offsetY : mev.layerY;
-      }
+    const cursorStart = (ev: PointerEvent) => {
+      // Ignore secondary pointers (e.g. a second finger) mid-stroke
+      if (!ev.isPrimary) return;
+
+      const x = ev.offsetX;
+      const y = ev.offsetY;
 
       // Bucket fill is a single click — don't start a stroke
       if (toolSelection === "bucket" && ctx) {
@@ -466,15 +529,15 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
         return;
       }
 
-      // Register the move listener for stroke drawing
-      if (isTouch) {
-        tmp_canvas.addEventListener("touchmove", onPaint, false);
-      } else {
-        tmp_canvas.addEventListener("mousemove", onPaint, false);
-      }
+      ev.preventDefault();
+      tmp_canvas.setPointerCapture(ev.pointerId);
+      drawingRef.current = true;
+      strokeVariableRef.current = pressure && ev.pointerType === "pen";
 
+      const w = widthFor(ev);
       cursorRef.current.x = x;
       cursorRef.current.y = y;
+      cursorRef.current.w = w;
 
       // Snapshot once per eraser stroke so onPaint can restore + redraw live
       if (toolSelection === "eraser" && ctx) {
@@ -486,35 +549,25 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
         );
       }
 
-      pptsRef.current.push({ x, y });
+      pptsRef.current.push({ x, y, w });
       onPaint();
     };
 
-    const cursorMove = (ev: MouseEvent | TouchEvent) => {
-      const rect = (ev.target as HTMLElement)?.getBoundingClientRect();
-      let clientX: number, clientY: number;
-      if (ev.type === "touchmove") {
-        const tev = ev as TouchEvent;
-        cursorRef.current.x = tev.targetTouches[0].pageX - rect.left;
-        cursorRef.current.y = tev.targetTouches[0].pageY - rect.top;
-        clientX = tev.targetTouches[0].clientX;
-        clientY = tev.targetTouches[0].clientY;
-      } else {
-        const mev = ev as MouseEvent;
-        cursorRef.current.x =
-          typeof mev.offsetX !== "undefined" ? mev.offsetX : mev.layerX;
-        cursorRef.current.y =
-          typeof mev.offsetY !== "undefined" ? mev.offsetY : mev.layerY;
-        clientX = mev.clientX;
-        clientY = mev.clientY;
-      }
+    const cursorMove = (ev: PointerEvent) => {
+      cursorRef.current.x = ev.offsetX;
+      cursorRef.current.y = ev.offsetY;
+      cursorRef.current.w = widthFor(ev);
       if (cursorCircleRef.current) {
-        cursorCircleRef.current.style.left = `${clientX}px`;
-        cursorCircleRef.current.style.top = `${clientY}px`;
+        cursorCircleRef.current.style.left = `${ev.clientX}px`;
+        cursorCircleRef.current.style.top = `${ev.clientY}px`;
       }
+      if (drawingRef.current) onPaint();
     };
 
-    const showCursorCircle = () => {
+    const showCursorCircle = (ev: PointerEvent) => {
+      // Only a hovering pointer (mouse/pen) gets the size-preview circle; a
+      // touch would just park it under the finger.
+      if (ev.pointerType === "touch") return;
       if (cursorCircleRef.current && toolSelection !== "bucket") {
         cursorCircleRef.current.style.opacity = "1";
       }
@@ -523,11 +576,11 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
       if (cursorCircleRef.current) cursorCircleRef.current.style.opacity = "0";
     };
 
-    const cursorEnd = (ev: MouseEvent | TouchEvent) => {
-      if (ev.type === "touchend") {
-        tmp_canvas.removeEventListener("touchmove", onPaint, false);
-      } else {
-        tmp_canvas.removeEventListener("mousemove", onPaint, false);
+    const cursorEnd = (ev: PointerEvent) => {
+      if (!drawingRef.current) return;
+      drawingRef.current = false;
+      if (tmp_canvas.hasPointerCapture(ev.pointerId)) {
+        tmp_canvas.releasePointerCapture(ev.pointerId);
       }
 
       if (!tmp_ctx || !ctx) return;
@@ -542,12 +595,16 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
       }
 
       pptsRef.current = [];
-      cursorRef.current = { x: 0, y: 0 };
+      cursorRef.current = { x: 0, y: 0, w: markerWidth };
     };
 
     const onPaint = () => {
       if (!tmp_ctx || !ctx) return;
-      pptsRef.current.push({ x: cursorRef.current.x, y: cursorRef.current.y });
+      pptsRef.current.push({
+        x: cursorRef.current.x,
+        y: cursorRef.current.y,
+        w: cursorRef.current.w,
+      });
 
       if (toolSelection === "eraser") {
         // Restore the pre-stroke snapshot then redraw the full accumulated path
@@ -566,6 +623,17 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
         ctx.restore();
         return;
       }
+
+      // Variable-width pen stroke: redraw the whole path with per-segment widths
+      if (strokeVariableRef.current) {
+        tmp_ctx.clearRect(0, 0, tmp_canvas.width, tmp_canvas.height);
+        drawVariablePath(tmp_ctx, pptsRef.current);
+        return;
+      }
+
+      // Fixed-width stroke: reassert lineWidth every frame so it doesn't inherit
+      // the small per-segment value a preceding variable-width pen stroke left behind.
+      tmp_ctx.lineWidth = markerWidth;
 
       if (pptsRef.current.length < 3) {
         const b = pptsRef.current[0];
@@ -597,28 +665,36 @@ const Paint = forwardRef<PaintHandle, PaintProps>(function Paint(
       tmp_ctx.lineCap = "round";
     };
 
+    // Pointer Events unify mouse / touch / pen. Capture keeps pointermove
+    // firing outside the canvas, so a single move listener replaces the old
+    // add/remove-on-drag trick.
     window.addEventListener("resize", handleResize);
-    tmp_canvas.addEventListener("mousedown", cursorStart, false);
-    tmp_canvas.addEventListener("mousemove", cursorMove, false);
-    tmp_canvas.addEventListener("mouseup", cursorEnd, false);
-    tmp_canvas.addEventListener("mouseenter", showCursorCircle, false);
-    tmp_canvas.addEventListener("mouseleave", hideCursorCircle, false);
-    tmp_canvas.addEventListener("touchstart", cursorStart, { passive: true });
-    tmp_canvas.addEventListener("touchmove", cursorMove, { passive: true });
-    tmp_canvas.addEventListener("touchend", cursorEnd, { passive: true });
+    tmp_canvas.addEventListener("pointerdown", cursorStart, false);
+    tmp_canvas.addEventListener("pointermove", cursorMove, false);
+    tmp_canvas.addEventListener("pointerup", cursorEnd, false);
+    tmp_canvas.addEventListener("pointercancel", cursorEnd, false);
+    tmp_canvas.addEventListener("pointerenter", showCursorCircle, false);
+    tmp_canvas.addEventListener("pointerleave", hideCursorCircle, false);
 
     return () => {
       window.removeEventListener("resize", handleResize, false);
-      tmp_canvas.removeEventListener("mousedown", cursorStart, false);
-      tmp_canvas.removeEventListener("mousemove", cursorMove, false);
-      tmp_canvas.removeEventListener("mouseup", cursorEnd, false);
-      tmp_canvas.removeEventListener("mouseenter", showCursorCircle, false);
-      tmp_canvas.removeEventListener("mouseleave", hideCursorCircle, false);
-      tmp_canvas.removeEventListener("touchstart", cursorStart, false);
-      tmp_canvas.removeEventListener("touchmove", cursorMove, false);
-      tmp_canvas.removeEventListener("touchend", cursorEnd, false);
+      tmp_canvas.removeEventListener("pointerdown", cursorStart, false);
+      tmp_canvas.removeEventListener("pointermove", cursorMove, false);
+      tmp_canvas.removeEventListener("pointerup", cursorEnd, false);
+      tmp_canvas.removeEventListener("pointercancel", cursorEnd, false);
+      tmp_canvas.removeEventListener("pointerenter", showCursorCircle, false);
+      tmp_canvas.removeEventListener("pointerleave", hideCursorCircle, false);
     };
-  }, [marker, markerWidth, fillTolerance, toolSelection, context, tmp_context]);
+  }, [
+    marker,
+    markerWidth,
+    fillTolerance,
+    toolSelection,
+    pressure,
+    minWidthRatio,
+    context,
+    tmp_context,
+  ]);
 
   // ─── Shared state object for renderControls ─────────────────────────────────
 

@@ -11,6 +11,7 @@ A zero-dependency React canvas paint component with built-in brush, eraser, and 
 ## Features
 
 - Brush, eraser, and bucket fill tools
+- Pointer Events input — unified mouse / touch / pen, with Apple Pencil pressure varying stroke width on iPadOS Safari
 - Dynamic slider — size in px for brush/eraser, tolerance % for bucket
 - Colour palette with custom colour picker
 - Brush/eraser size preview cursor (visible on light and dark backgrounds)
@@ -51,6 +52,8 @@ type PaintProps = {
   controls?: boolean;
   colors?: string[];
   fillTolerance?: number;
+  pressure?: boolean;
+  minWidthRatio?: number;
   renderControls?: (state: PaintState) => ReactNode;
   classNames?: PaintClassNames;
 };
@@ -61,6 +64,8 @@ type PaintProps = {
 | `controls` | `false` | Show the built-in toolbar |
 | `colors` | `["#000", "#EF626C", "#FDEC03", "#24D102", "#FFF"]` | Preset colour swatches |
 | `fillTolerance` | `80` | Initial bucket tolerance (0–128, raw per-channel RGBA delta) |
+| `pressure` | `true` | Vary stroke width with pen pressure. Applies to pen/stylus input (e.g. Apple Pencil); mouse and touch always draw at `markerWidth` |
+| `minWidthRatio` | `0.15` | Lightest pen width as a fraction of the current size (`markerWidth`). Full pressure is `markerWidth`; lightest is `markerWidth * minWidthRatio`, so the taper scales with the size slider |
 | `renderControls` | — | Replace the built-in toolbar entirely with your own UI |
 | `classNames` | — | Override class names on individual toolbar slots |
 
@@ -164,6 +169,32 @@ type PaintClassNames = {
   btnSave?: string;
 };
 ```
+
+---
+
+## Usage on touch devices (iOS/iPadOS)
+
+The component sets `touch-action: none` on its canvases itself, so single-finger
+and Apple Pencil drags draw instead of scrolling — you don't need to add that.
+
+There's one thing the component **can't** own: when the paint view fills the
+screen, Safari's pull-to-refresh / rubber-band can still fire if a drag starts
+from outside the canvas. Lock page scrolling from the host page **while the
+paint view is full-screen** (a route-scoped class is ideal, so ordinary pages
+keep scrolling):
+
+```css
+/* Full-screen paint page: stop iOS rubber-band / pull-to-refresh. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+```
+
+Apply this only while the paint view is mounted/full-screen, and remove it
+otherwise so the rest of your app scrolls normally.
 
 ---
 
