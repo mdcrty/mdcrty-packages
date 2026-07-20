@@ -17,8 +17,24 @@ A performant, canvas-based animated bee swarm for React.
 - Cross-browser fixes (Chrome / Safari / Windows)
 - Configurable density, timing, and layering
 
+🎨 Demo: https://mediocrity.media/beez/  
 📦 npm: https://www.npmjs.com/package/@mdcrty/bees  
 📖 Docs: [`packages/bees/README.md`](./packages/bees/README.md)
+
+---
+
+### `@mdcrty/color` 🎨
+
+A zero-dependency React colour picker and converter.
+
+- Converts between hex, RGB, HSL, HSV, LAB, LCH, OKLCH, HWB, and CMYK
+- Visual picker (gradient square + hue + alpha bars)
+- Per-format text inputs with copy buttons
+- Optional full-page ripple background mode
+
+🎨 Demo: https://mediocrity.media/color/  
+📦 npm: https://www.npmjs.com/package/@mdcrty/color  
+📖 Docs: [`packages/color/README.md`](./packages/color/README.md)
 
 ---
 
@@ -30,8 +46,25 @@ A Matrix-style “digital rain” animation component for React.
 - Optional static messages
 - Designed for creative / visual experiments
 
+🎨 Demo: https://mediocrity.media/digital-rain/  
 📦 npm: https://www.npmjs.com/package/@mdcrty/digital-rain  
 📖 Docs: [`packages/digital-rain/README.md`](./packages/digital-rain/README.md)
+
+---
+
+### `@mdcrty/paint` 🖌️
+
+A zero-dependency React canvas paint component with built-in brush, eraser, and bucket fill tools.
+
+- Brush, eraser, and bucket fill tools
+- Pointer Events input — unified mouse / touch / pen, with Apple Pencil pressure support
+- Colour palette with custom colour picker
+- Built-in save (PNG download) and clear actions
+- Fully customisable via `classNames` or a `renderControls` render prop
+
+🎨 Demo: https://mediocrity.media/draw/  
+📦 npm: https://www.npmjs.com/package/@mdcrty/paint  
+📖 Docs: [`packages/paint/README.md`](./packages/paint/README.md)
 
 ---
 
@@ -41,7 +74,9 @@ A Matrix-style “digital rain” animation component for React.
 .
 ├─ packages/
 │  ├─ bees/
-│  └─ digital-rain/
+│  ├─ color/
+│  ├─ digital-rain/
+│  └─ paint/
 ├─ templates/
 ├─ tsconfig.base.json
 ├─ package.json

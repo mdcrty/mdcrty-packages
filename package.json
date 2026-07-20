@@ -2,7 +2,7 @@
   "name": "mdcrty-packages",
   "version": "0.1.0",
   "private": true,
-  "description": "Monorepo of mdcrty npm packages",
+  "description": "Monorepo of @mdcrty React packages: bees, color, digital-rain, and paint",
   "workspaces": [
     "packages/*"
   ],
@@ -16,7 +16,14 @@
     "type": "git",
     "url": "git+https://github.com/mdcrty/mdcrty-packages.git"
   },
-  "keywords": [],
+  "keywords": [
+    "react",
+    "canvas",
+    "animation",
+    "color",
+    "paint",
+    "mdcrty"
+  ],
   "author": "leonanderson88",
   "license": "MIT",
   "type": "module",
@@ -25,10 +32,10 @@
   },
   "homepage": "https://github.com/mdcrty/mdcrty-packages#readme",
   "devDependencies": {
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "tsup": "^8.0.0",
-    "typescript": "^5.9.3"
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2"
   },
   "allowScripts": {
     "esbuild": true,
